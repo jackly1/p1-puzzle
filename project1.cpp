@@ -1,6 +1,162 @@
-// Project Identifier: 39E995D00DDE0519FDF5506EED902869AEC1C39E
+// Project Identifier: A8A3A33EF075ACEF9B08F5B9845569ECCB423725
 
 // EECS 281, Project 1
+//use DEQUES
+//use 3d vector for backtrace
+/*
+    2D Example, Queue
+    Notes:
+        - we only discover things once
+        - things get discovered in the search container
+        - how did i get to the start location? i just started there
+        - backtrace looks like a 2d vector (in the real one a 3d vector)
+        - linear searches in list are poor, the backtrace keeps track of everything
+         that has been discovered, takes one access to row, one to column, see if its a space
+         then im done
+        - Loop while that search container is not empty, search container is known as
+        the list of places that i still ahve to investigate
+        - if search container is empty i have run out of places to look
+        - when current state has been discovered, it moves to current state, then
+        we need to investigate, i.e., where to go next.
+        - if youre standing on a button ( lower case) or trap (which is ^)
+            -this changes color
+            -then i have to do button stuff
+        - if not standing on trap or button
+            -then north east south west
+        - in scenario where only (1,1), not on button not on trap, 
+            -lets do N, E, S, W (in that order)
+            -when look north, first say, is north a valid place to look? 
+            (i.e., am i in row 0)
+            -check what is north of me?
+                - is it valid
+                - is it something i could walk on
+                - is it someplace i've never discovered et
+                - if all true then we can discover that location
+            -then add location to seradch container and modify backtrace
+            - I came from the south so (0,1) is marked by an S
+            -now check east
+            -now check south, 
+                - can I walk? no, # means a solid wall
+            - now look west
+                -can i walk? no, # wall, move on
+            -now target(?) has not been found, so done investigating this square, onto the next
+            - (1,1) investigation is over, POP it
+            -we're using a queue so we take from the FRONT of the queue in Search container
+            - now the current state is (0,1) and POP from search container
+            - can i look north? NO
+            - east? YES add (0,2) to search container, mark with W (came from the west)
+            - south?, no has been discovered already
+            - west? yes, add (0,0), mark with E (came from the east)
+            - discovery over, pop  (0,1) from current state
+            - pull from FRONT of search container, now current state is (1,2)
+            - CONTINUE THE SAME PROCESS...
+            - at (2,3)
+            - can i look N?
+                -yes, can I walk? no, wall
+            - can i look E? no, not a valid location
+            - south? 
+                -have i been there, could I wawlk on it, YES! target found
+            - add 3,3 to serach container, mark it, I came from the north
+            - now that its the target, stop, dont even look west
+            - is there a solution? yes, mark such as true
+            - or if in function return true
+            - every location that has been dsicovered, bc they can only have been discovered once
+            only has one place it came from
+            - now lets not start at the beginning, lets start at the end
+            - we need some sort of contianer here to look from the targetback to the beginning
+                -really want to print how I got from start to end
+                - could use stack, vector, or DEQUE
+
+
+
+          Map                         Backtrace
+       0  1  2  3                  0  1  2  3
+     0 .  .  .  #                0 E  S  W 
+     1 #  @  .  #                1    @  W  
+     2 .  #  .  .                2       N  W
+     3 .  .  #  ?                3          N
+     4 .  # .  .                 4 
+
+    Search Container(Row, Col)       Current State
+    (1,1)X(0,1)X (1,2)X (0,2)X       (1,1)X (0,1)X (1,2)X
+    (0,0)X (2,2)X (2,3)X              (0,2)X (0,0)X (2,2)X
+                                     (2,3)
+    
+    
+    -start with 3,3
+        - hey 3,3 where did you come from?
+        NORTH
+        - ok 2,3
+        -where did 2,3 come from
+        WEST
+        - ok 2,2
+        -where did 2,2 come from
+        NORTH
+        - ok 1,2
+        -where did 1,2 come from
+        West
+        - ok 1,1
+        -where did 1,1 come from
+        IM THE START
+        -done filling up the path container
+
+        -print list output mode, all i have to do is go backwards through my path
+            - if stack, look from back and pop it
+        - map output a little harder
+            - to print map, we can go through our backtrace and change it bascially to what we want printed
+            - what we want printed is, hey when i was at the start where did I go (east)
+            -everything gets changed with + or  for arrivals and changes
+            - go through path using plus signs in the map:
+
+    original Backtrace              backtrace to be printed
+      0  1  2  3                  0  1  2  3
+    0 E  S  W                   0 E  S  W 
+    1    @  W                   1    @  + 
+    2       N  W                2       +  +
+    3          N                3          ?
+    4                           4
+
+        -now when time to print the map we look at the backtrace
+        -if it is @ or + or ? or % (comes in when multiple forms)
+        - I would print backtrace, otherwise print whats in original map
+    FINAL MAP:                 
+       0  1  2  3         
+     0 .  .  .  #        
+     1 #  @  +  #             
+     2 .  #  +  +             
+     3 .  .  #  ?       
+     4 .  # .  .  
+
+    PATH:
+    (3,3), (2,3), (2,2), (1,2), (1,1)
+
+
+
+    3D Example, Queue:
+
+           Map                         Backtrace
+       0  1  2  3                  0  1  2  3
+     0 .  .  .  #                0 E  S  W 
+     1 #  @  .  #                1    @  W  
+     2 .  #  .  .                2       N  W
+     3 .  .  #  ?                3          N
+     4 .  # .  .                 4 
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
 
 #include <getopt.h>
 #include <iostream>

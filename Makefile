@@ -36,11 +36,13 @@ PROJECTFILE = $(or $(wildcard project*.cpp $(EXECUTABLE).cpp), main.cpp)
 # If main() is in another file delete line above, edit and uncomment below
 #PROJECTFILE = mymainfile.cpp
 
+
 # This is the path from the CAEN home folder to where projects will be
 # uploaded. (eg. /home/mmdarden/eecs281/project1)
 # Change this if you prefer a different path.
 # REMOTE_PATH := eecs281_$(EXECUTABLE)_sync  # /home/mmdarden/eecs281_proj0_sync
-REMOTE_PATH := eecs281_$(EXECUTABLE)_sync
+#/Users/jacklilleyerington/Desktop/Umich/Fall 2023:2024
+REMOTE_PATH := Desktop_Umich_Fall 2023:2024_$(EXECUTABLE)_sync
 #######################
 # TODO (end) #
 #######################
