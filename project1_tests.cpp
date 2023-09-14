@@ -1,6 +1,6 @@
 // Project Identifier: A8A3A33EF075ACEF9B08F5B9845569ECCB423725
 
-#include "project1.cpp"
+#include "main.cpp"
 #include <iostream>
 #include <sstream>
 

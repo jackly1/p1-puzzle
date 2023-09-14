@@ -382,7 +382,7 @@ STL TIPS:
         -create a ** or *** (double/triple pointer)
         -create a nested vector<>
             -create the vector with the right size initially
-            -use the .resize() memeber function on each dimension before reading the file
+            -use the .resize() member function on each dimension before reading the file
         - or any choice, explot locality of reference
             -use subscripts in this order: [color][row][col]
     Creating or Initializing a Vector
@@ -480,6 +480,9 @@ STL TIPS:
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <vector> 
+#include <deque>
+
 using namespace std;
 
 // These modes represent the different ways to process the input data.
@@ -500,6 +503,191 @@ struct Options {
   Mode mode = Mode::kNone;
 };  // Options{}
 
+
+class PuzzleRunner{
+    private: 
+        //when using stack: .back() and .pop_back()
+        //when using queue: .front() and .pop_front()
+        uint32_t numColors = 0;
+        uint32_t rows = 0;
+        uint32_t cols = 0;
+        vector<vector<char> > map;
+        vector<vector<vector<char> > > backtrace;
+        deque<int, pair<int, int>> searcherStorer;
+    public:
+        
+        /*
+        Simply throws error if one of the following occurs:
+(done)      - 0 <= num_colors <= 26 (0 colors is valid, it just means that there are no doors)
+(done)      - 1 <= width
+(done)      - 1 <= height
+(to do)      - Exactly one of --stack/-s and --queue/-q are provided
+(to do)      - The argument to --output/-o (if provided) is either "list" or "map"
+(to do)      - No invalid command line options are provided (such as -x or --eecs281)
+(to do)      - No invalid door or button appears in the map (if <num_colors> == 3 , then 'M' and 'z' are invalid)
+(to do)      - No invalid characters appear in the map ('+' can’t appear in the map, but it could appear in a comment)
+(to do)      - '@' appears exactly once in the input map
+(to do)      - '?' appears exactly once in the input map   
+        */
+        void throwError(){
+            exit(1);
+        }
+    
+        void resizeMap(){
+            map.resize(rows, vector<char>(cols, -1));
+        }
+        void resizeBacktrace(){
+            backtrace.resize(numColors, 
+                    vector<vector<char> >(rows, vector<char>(cols, -1)));
+        }
+        bool isComment(string l){
+            if(*(l.begin()) == '/'){
+                return true;
+            }
+            return false;
+        }
+        vector<char> lineConvert(string l){
+            vector<char> toReturn;
+            int numCols = 0;
+            for(string::iterator it = l.begin(); it != l.end(); it++){
+                toReturn.push_back(*it);
+                numCols++;
+            }
+            if(numCols > cols){
+                cout << "ERROR MESSAGE: NUMCOLS > COLS \n";
+                throwError();
+            }
+            return toReturn;
+        }
+        /*
+          - 2 4 4 (then would have actual map)
+                //VIDEO 3D EXAMPLE
+         -once the reading started, don't use get line
+         - cin >> numColors >> rows >> cols 
+            - getline(cin, junk); (retrieves the \n that we didnt read in)
+            - RESIZE VECTOR(S) (map and backtrace) NOW
+         */
+        void checkValidInitializing(){
+            if(0 > numColors || numColors > 26
+            || 1 > rows || 1 > cols){
+                cout << "INPUT FOR INITIALIZING TABLE INCORRECT\n";
+                throwError();
+            }
+        }
+
+        /*
+        converts a given tile (in char form) to the integer it matches
+        */
+        int charToRoom(char tile){
+            return static_cast<uint32_t>(tile - 'a') + 1;
+        }
+
+        /*
+        converts a given roomColor (in int form) to the character it matches
+        */
+        char roomToChar(int roomColor){
+            return static_cast<char>(roomColor + 'a') - 1;
+        }
+        void readPuzzle(){
+            string junk;
+            cin >> numColors >> rows >> cols;
+            checkValidInitializing();
+            getline(cin, junk);
+            //figure out why we need to count row here
+            int row = 0;
+            string line;
+            while(getline(cin, line )){
+                if(!isComment(line)){
+                   map.push_back(lineConvert(line));    //might be incorrect
+                   row++;
+                }
+            }
+        }
+        bool solvePuzzle(){
+            
+            return false;
+        }
+        void printNoSolution(){
+            //now print the map as it was provided upon input
+            //however, with all undiscovered locations replaced with #
+            //this includes empty floors, doors, buttons, and the target,
+            //if no sultion, target will always be replaced with #
+        }
+        void printSolved(){
+        /*
+            - Print the map similar to the way it was given in the input 
+            (excluding the map parameters and any comments). 
+            - Print each color in a separaate map one after the other,
+            starting with ^ and working alphabetically from A to all others
+            - Each color map should be preceded by a comment indicating the 
+            color being output and include the following replacements:
+                - On the solution path between the starting location and target, 
+                empty floors and open doors should be replaced with '+'
+                - On the solution path, replace inactive buttons with '%'
+                on the map where they were discovered and with '@' on the map that
+                matches the button
+                - On the //color ^ map, all trapped buttons not on the solution path
+                marked with '.'
+                - On the //color a map, all matching buttons a and doors A not on the 
+                solution path are replaced with '.'
+                Color maps following 'a' replace buttons and doors with '.', similar to 'a'
+            - This is map output using a queue search_container; it begins with 
+            the starting location @ in the upper left of the //color ^ map,
+            moves east to the + and then south onto the a button, which is pressed, 
+            and replcaed by %. he a button press moves the solution path to the 
+            // color a map at the same location, which is replaced by @. 
+            Then the trail of + shows travel north and east until button b is 
+            pressed and replaced by %. The b button press moves the solution path 
+            to the // color b map at the same location, which is replaced by @, 
+            then the trail of + shows travel west then south then west until 
+            the target is discovered. The starting location is only displayed 
+            on the ^ map, but the target is displayed on all color maps. 
+            Map output with queue:
+                // color ^
+                @  +  .  A  .  .  b
+                .  %  .  #  B  #  #
+                #  #  #  #  .  .  .
+                ?  .  .  B  .  .  .
+                // color a
+                .  +  +  +  +  +  %
+                .  @  .  #  B  #  #
+                #  #  #  #  .  .  .
+                ?  .  .  B  .  ^  ^
+                // color b
+                .  .  .  A  +  +  @  
+                .  a  .  #  +  #  #
+                #  #  #  #  +  .  .
+                ?  +  +  +  +  ^  ^
+            Map output with stack:
+                // color ^
+                @  .  .  A  .  .  b
+                .  %  .  #  B  #  #
+                #  #  #  #  .  .  .
+                ?  .  .  B  .  .  .
+                // color a
+                .  +  +  +  +  +  %
+                .  @  .  #  B  #  #
+                #  #  #  #  .  .  .
+                ?  .  .  B  .  ^  ^
+                // color b
+                .  .  .  A  +  +  @  
+                .  a  .  #  +  #  #
+                #  #  #  #  +  .  .
+                ?  +  +  +  +  ^  ^
+            normally a bigger difference can be found in a more complicated map
+        */
+        }
+        void play(){
+            if(!solvePuzzle){
+                cout << "No solution.\nDiscovered:";
+                printNoSolution();
+            }
+            else{
+                printSolved();
+            }
+        }
+
+}; //end of PuzzleRunner Class
 
 // Print help for the user when requested.
 // argv[0] is the name of the currently executing program
@@ -570,73 +758,6 @@ void getMode(int argc, char * argv[], Options &options) {
   }  // if ..mode
 }  // getMode()
 
-
-void readWithResize(vector<double> &data) {
-  //step 1
-  size_t size;
-  cin >> size;
-
-  //step 2
-  data.resize(size);
-  for(size_t i = 0; i < size; i++){
-      cin >> data[i];
-  } //for i < vector size
-
-}  // readWithResize()
-
-
-void readWithReserve(vector<double> &data) {
-  size_t size;
-  cin >> size;
-
-  data.reserve(size);
-
-  for(size_t i = 0; i < size; i++){
-    size_t curr;
-    cin >> curr;
-    data.push_back(curr);
-  }//for i < size
-
-}  // readWithReserve()
-
-
-void readWithNoSize(vector<double> &data) {
-  size_t currData;
-  while(cin >> currData){
-    data.push_back(currData);
-  } //while still numbers left
-
-}  // readWithNoSize()
-
-
-double getAverage(const vector<double> &data) {
-  double average;
-  double sum = 0;
-
-  for (size_t i = 0; i < data.size(); ++i)
-    sum += data[i];
-
-  average = sum / static_cast<double>(data.size());
-  return average;
-}  // getAverage()
-
-
-double getMedian(vector<double> &data) {
-  // Sort the data
-  sort(data.begin(), data.end());
-
-  // Figure out if vector size is even or odd
-  if (data.size() % 2 == 1)
-    return data[data.size() / 2];
-
-  // Even size, average 2 middle values
-  auto mid = data.size() / 2;
-  double v1 = data[mid];
-  double v2 = data[mid - 1];
-  return (v1 + v2) / 2;
-}  // getMedian()
-
-
 int main(int argc, char *argv[]) {
   // This should be in all of your projects, speeds up I/O
   ios_base::sync_with_stdio(false);
@@ -646,11 +767,11 @@ int main(int argc, char *argv[]) {
   Options options;
   getMode(argc, argv, options);
   vector<double> data;
-  if (options.mode == Mode::kResize)
-    readWithResize(data);
-  else if (options.mode == Mode::kReserve)
-    readWithReserve(data);
-  else if (options.mode == Mode::kNoSize)
-    readWithNoSize(data);
+//   if (options.mode == Mode::kResize)
+//     readWithResize(data);
+//   else if (options.mode == Mode::kReserve)
+//     readWithReserve(data);
+//   else if (options.mode == Mode::kNoSize)
+//     readWithNoSize(data);
 
 }
