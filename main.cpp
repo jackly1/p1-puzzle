@@ -603,9 +603,36 @@ class PuzzleRunner{
                 }
             }
         }
-        bool solvePuzzle(){
-            
+
+        bool solveQueue(){
+        /*
+            Your solution should faithfully implement the following algorithm:
+
+            1. Initially mark all states as not discovered.
+            2. Add the initial state to the search_container and mark it as discovered.
+            3. Loop while the search_container is NOT empty.
+            4. Remove the “next” item from the search_container. This is the current_state, which consists of a <color> plus <row> and <col> coordinates { <color>, <row>, <col> }.
+            5. If current_state { <color>, <row>, <col> } is standing on an active button, <button>, there is a chance to add a color change. If { <button>, <row>, <col> } is not yet discovered, add the color change to the search_container and mark it as discovered. Investigation from an active button will result in zero or one states being discovered.
+            6. f current_state { <color>, <row>, <col> } is NOT standing on an active button, there is a chance to add adjacent locations. Discover the following four states, provided they are not off the edge of the map, not previously discovered, and not a wall or closed door:
+            7. north/up { <color>, <row - 1>, <col> }
+            8. east/right { <color>, <row>, <col + 1> }
+            9. south/down { <color>, <row + 1>, <col> }
+            10. west/left { <color>, <row>, <col - 1> }
+            11. Repeat from step 3.
+        */
             return false;
+        }
+
+        bool solveStack(){
+            return false;
+        }
+        //solvePuzzle checks if there is a solution to either
+        //the queue call or the stack call depending on the argument passed
+        bool solvePuzzle(){
+            //if queue
+            return solveQueue();
+            //if stack
+            return solveStack();
         }
         void printNoSolution(){
             //now print the map as it was provided upon input
@@ -613,7 +640,42 @@ class PuzzleRunner{
             //this includes empty floors, doors, buttons, and the target,
             //if no sultion, target will always be replaced with #
         }
-        void printSolved(){
+        void printListOutput(){
+        /*
+            For list output, print the list of states in the solution path from 
+            the starting location to the target, inclusive. 
+            Use the format (<color>, (<row>, <col>)) with <color> being a 
+            lowercase letter or '^' to indicate the active color, 
+            <row> being the 0-indexed row of the location, and <col> being 
+            the 0-indexed column of the location. The first state printed 
+            should be '^' with the starting location, and the last state 
+            printed should be the current color when the location of the target 
+            was first discovered by the algorithm.
+
+            List mode output using a queue search_container:
+                (^, (0, 0))
+                (^, (0, 1))
+                (^, (1, 1))
+                (a, (1, 1))
+                (a, (0, 1))
+                (a, (0, 2))
+                (a, (0, 3))
+                (a, (0, 4))
+                (a, (0, 5))
+                (a, (0, 6))
+                (b, (0, 6))
+                (b, (0, 5))
+                (b, (0, 4))
+                (b, (1, 4))
+                (b, (2, 4))
+                (b, (3, 4))
+                (b, (3, 3))
+                (b, (3, 2))
+                (b, (3, 1))
+                (b, (3, 0))
+        */
+        }
+        void printMapOutput(){
         /*
             - Print the map similar to the way it was given in the input 
             (excluding the map parameters and any comments). 
@@ -642,6 +704,7 @@ class PuzzleRunner{
             then the trail of + shows travel west then south then west until 
             the target is discovered. The starting location is only displayed 
             on the ^ map, but the target is displayed on all color maps. 
+            
             Map output with queue:
                 // color ^
                 @  +  .  A  .  .  b
@@ -677,6 +740,16 @@ class PuzzleRunner{
             normally a bigger difference can be found in a more complicated map
         */
         }
+
+        //calls on either list or map outputs to be printed
+        void printSolved(){
+            //if --ouput/-o list
+            printListOutput();
+            //if --output/-o map
+            printMapOutput();
+        }
+        
+        //runs the whole program, starting by a call to see if the puzzle is solvable
         void play(){
             if(!solvePuzzle){
                 cout << "No solution.\nDiscovered:";
