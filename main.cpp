@@ -147,7 +147,7 @@
             - not on button so can do NESW
             - north doesnt exist, east does, hasn't been discovered, and is not walkable,
             is a capital A, in default color As or Bs are solid, cant step
-            -south does exist, never been discovered , something walkable, mark it as N (came from the NORTH)
+            -south 1does exist, never been discovered , something walkable, mark it as N (came from the NORTH)
             - west exists, already been discovered
          - at (^, 1, 0)
             - not on button so can do NESW
@@ -502,40 +502,40 @@ enum class Mode {
 struct Options {
   Mode mode = Mode::kNone;
 };  // Options{}
-struct Place{
-    private:
-        int color = 0;
-        int row = 0;
-        int col = 0;
-        //int cameFrom represents the "How did I get here?"
-        //0 indicates the starting position, 
-        //1 from the north
-        //2 from the east
-        //3 from the south
-        //4 from the west
-        int cameFrom = 0;
-    public:
-        void setValues(int c, int ro, int co){
-            color = c;
-            row = ro;
-            col = co;
-        }
-        int getColor(){
-            return color;
-        }
-        int getRow(){
-            return row;
-        }
-        int getCol(){
-            return col;
-        }
-        void setCameFrom(int cf){
-            cameFrom = cf;
-        }
-        int getCameFrom(){
-            return cameFrom;
-        }
-};
+// struct Place{
+//     private:
+//         int color = 0;
+//         int row = 0;
+//         int col = 0;
+//         //int cameFrom represents the "How did I get here?"
+//         //0 indicates the starting position, 
+//         //1 from the north
+//         //2 from the east
+//         //3 from the south
+//         //4 from the west
+//         int cameFrom = 0;
+//     public:
+//         void setValues(int c, int ro, int co){
+//             color = c;
+//             row = ro;
+//             col = co;
+//         }
+//         int getColor(){
+//             return color;
+//         }
+//         int getRow(){
+//             return row;
+//         }
+//         int getCol(){
+//             return col;
+//         }
+//         void setCameFrom(int cf){
+//             cameFrom = cf;
+//         }
+//         int getCameFrom(){
+//             return cameFrom;
+//         }
+// };
 
 
 class PuzzleRunner{
@@ -546,12 +546,11 @@ class PuzzleRunner{
         uint32_t rows = 0;
         uint32_t cols = 0;
         vector<vector<char> > map;
+        //track directions, NESW
         vector<vector<vector<char> > > backtrace;
-        Place initialPosition;
-        //deque<int, pair<int, int>> searchContainer;
-        //deque<int, pair<int, int> currentState;
-        deque<Place> searchContainer;
-        deque<Place> currentState;
+        pair<int, pair<int, int>> initialPosition;
+        deque<pair<int, pair<int, int>>> searchContainer;
+        deque<pair<int, pair<int, int>>> currentState;
         vector<pair<int, pair<int, int>>> placesDiscovered;
     public:
         /*
@@ -559,9 +558,9 @@ class PuzzleRunner{
 (done)      - 0 <= num_colors <= 26 (0 colors is valid, it just means that there are no doors)
 (done)      - 1 <= width
 (done)      - 1 <= height
-(to do)      - Exactly one of --stack/-s and --queue/-q are provided
-(to do)      - The argument to --output/-o (if provided) is either "list" or "map"
-(to do)      - No invalid command line options are provided (such as -x or --eecs281)
+(to do)     - Exactly one of --stack/-s and --queue/-q are provided
+(to do)     - The argument to --output/-o (if provided) is either "list" or "map"
+(to do)     - No invalid command line options are provided (such as -x or --eecs281)
 (done)      - No invalid door or button appears in the map (if <num_colors> == 3 , then 'M' and 'z' are invalid)
 (done)      - No invalid characters appear in the map ('+' can’t appear in the map, but it could appear in a comment)
 (done)      - '@' appears exactly once in the input map
@@ -612,7 +611,9 @@ class PuzzleRunner{
                 throwError();
             }
         }
-
+        pair<int,pair<int,int>> makeCoordinate(int col, int r, int c){
+            return make_pair(col, make_pair(r,c));
+        }
         /*
         converts a given tile (in char form) to the integer it matches
         */
@@ -680,12 +681,11 @@ class PuzzleRunner{
             for(auto &charVec:map){
                 for(int j = 0; j < charVec.size(); j++){
                     if(isAtSymbol(j)){
-                        initialPosition.setValues(charToRoom('^'), rowCounter, j);
+                        initialPosition = makeCoordinate(charToRoom('^'),rowCounter, j);
                     }
                 }
                 rowCounter++;
             }
-            initialPosition.setCameFrom(0);
         }
 
         void readPuzzle(){
@@ -719,26 +719,102 @@ class PuzzleRunner{
         - for a queue, use .front() and .pop_front()
         */
 
-        bool isButton(Place curr){
+        bool isButton(pair<int,pair<int,int>> &curr){
             for(int i = 'a'; i <= 'a' + numColors; i++){
-                if(i == tolower(roomToChar(curr.getColor()))){
+                if(i == tolower(roomToChar(curr.first))){
                     return true;
                 }
             }
             return false;
         }
-        void discoverNorth(){
+
+        //returns whether the provided coordinate is out of bounds or not
+        bool isValidCoordinate(pair<int,pair<int,int>> &toWalkOn){
+            int r = toWalkOn.second.first;
+            int c = toWalkOn.second.second;
+            if(r < 0 || r >= rows || c < 0 || c >= cols){
+                return false;
+            }
+            return true;
+        }
+
+
+        //returns whether the provided coordinate is a wall given a color
+        bool isWall(int &currColor, int &walkingColor){
+            char currChar = roomToChar(currColor);
+            char toWalk = roomToChar(walkingColor);
+            //default case
+            if(roomToChar(currColor) == '^'){
+                
+            }
+        }
+        
+        //given two coordinates, returns whether the second is walkable or not
+        bool isWalkable(const pair<int, pair<int,int>> &curr, const pair<int,pair<int,int>> &toWalkOn){
+            if(!isValidCoordinate){
+                return false;
+            }
 
         }
-        void discoverEast(){
+        
+        bool gotDiscovered(pair<int,pair<int,int>> &curr){
+            for(int i = 0; i < placesDiscovered.size(); i++){
+                if(placesDiscovered[i].first == curr.first
+                && placesDiscovered[i].second == curr.second){
+                    return true;
+                }
+            }
+            return false;
+        }
 
+        void lookDirection(pair<int,pair<int,int>> &curr){
+            int currentColor = curr.first;
+            int currentRow = curr.second.first;
+            int currentCol = curr.second.second;
+            pair<int, pair<int, int>> north = makeCoordinate(currentColor, currentRow - 1, currentCol);
+            pair<int, pair<int, int>> east = makeCoordinate(currentColor, currentRow, currentCol + 1);
+            pair<int, pair<int, int>> south = makeCoordinate(currentColor, currentRow + 1, currentCol);
+            pair<int, pair<int, int>> west = makeCoordinate(currentColor, currentRow, currentCol - 1);
+            //provided they are not off the edge of the map, not previously discovered,
+            // and not a wall or closed door:
+                // 7. north/up { <color>, <row - 1>, <col> }
+                if(!gotDiscovered(north) && isWalkable(curr, north)){
+                    if(isButton(north)){
+                        //add color change to search_container and mark it as discovered
+                    }
+                    else{
+                        //mark discovered add to search_containers
+                    }
+                }
+                // 8. east/right { <color>, <row>, <col + 1> }
+                if(!gotDiscovered(east) && isWalkable(curr, east)){
+                    if(isButton(east)){
+                        //add color change to search_container and mark it as discovered
+                    }
+                    else{
+                        //mark discovered add to search_containers
+                    }
+                }
+                // 9. south/down { <color>, <row + 1>, <col> }
+                if(!gotDiscovered(south) && isWalkable(curr, south)){
+                    if(isButton(south)){
+                        //add color change to search_container and mark it as discovered
+                    }
+                    else{
+                        //mark discovered add to search_containers
+                    }
+                }
+                //10. west/left { <color>, <row>, <col - 1> }
+                if(!gotDiscovered(west) && isWalkable(curr, west)){
+                    if(isButton(west)){
+                        //add color change to search_container and mark it as discovered
+                    }
+                    else{
+                        //mark discovered add to search_containers
+                    }
+                }
         }
-        void discoverSouth(){
-            
-        }
-        void discoverWest(){
-            
-        }
+
         //when using queue: .front() and .pop_front()
         bool solveQueue(){
             //Your solution should faithfully implement the following algorithm:
@@ -748,6 +824,7 @@ class PuzzleRunner{
 
             //2. Add the initial state to the search_container and mark it as discovered.
             searchContainer.push_front(initialPosition);
+            backtrace[initialPosition.first][initialPosition.second.first][initialPosition.second.second] = '@';
            // 3. Loop while the search_container is NOT empty.
            while(!searchContainer.empty()){
              // 4. Remove the “next” item from the search_container. This is the current_state, which consists of a 
@@ -756,35 +833,23 @@ class PuzzleRunner{
             searchContainer.pop_front();
             // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
             // <button>, there is a chance to add a color change. 
-            //If { <button>, <row>, <col> } is not yet discovered, 
-            //add the color change to the search_container and mark it as discovered. 
-            //Investigation from an active button will result in zero or one states being discovered.
-            Place curr = currentState.front();
-            if(isButton(curr)){
-                for(int i = 0; i < placesDiscovered.size(); i++){
-                    if(placesDiscovered[i].first == curr.getColor()
-                    && placesDiscovered[i].second == make_pair(curr.getRow(), curr.getCol())){
-
-                    }
-                }
-            }
+            pair<int,pair<int,int>> curr = currentState.front();
+            if(isButton(curr) && !gotDiscovered(curr)){
+                //If { <button>, <row>, <col> } is not yet discovered, 
+                //add the color change to the search_container and mark it as discovered. 
+                
+                //Investigation from an active button will result in zero or one states being discovered.
+            }//case where undiscovered button
+            else if(isButton(curr)){
+                //do nothing, has been discovered
+            }//case where already discovered button
             else{
-                discoverNorth();
-                discoverEast();
-                discoverSouth();
-                discoverWest();
+                // 6. If current_state { <color>, <row>, <col> } is NOT standing on an active button, 
+                //there is a chance to add adjacent locations. Discover the following four states, 
+                
+                lookDirection(curr);
             }
-            // 6. If current_state { <color>, <row>, <col> } is NOT standing on an active button, 
-            //there is a chance to add adjacent locations. Discover the following four states, 
-            //provided they are not off the edge of the map, not previously discovered, and not a wall or closed door:
-            // 7. north/up { <color>, <row - 1>, <col> }
-            // 8. east/right { <color>, <row>, <col + 1> }
-            // 9. south/down { <color>, <row + 1>, <col> }
-                //10. west/left { <color>, <row>, <col - 1> }
            }
-          
-            //11. Repeat from step 3.
-        //
             return false;
         }
        //when using stack: .back() and .pop_back()
