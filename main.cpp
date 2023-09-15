@@ -502,6 +502,40 @@ enum class Mode {
 struct Options {
   Mode mode = Mode::kNone;
 };  // Options{}
+struct Place{
+    private:
+        int color = 0;
+        int row = 0;
+        int col = 0;
+        //int cameFrom represents the "How did I get here?"
+        //0 indicates the starting position, 
+        //1 from the north
+        //2 from the east
+        //3 from the south
+        //4 from the west
+        int cameFrom = 0;
+    public:
+        void setValues(int c, int ro, int co){
+            color = c;
+            row = ro;
+            col = co;
+        }
+        int getColor(){
+            return color;
+        }
+        int getRow(){
+            return row;
+        }
+        int getCol(){
+            return col;
+        }
+        void setCameFrom(int cf){
+            cameFrom = cf;
+        }
+        int getCameFrom(){
+            return cameFrom;
+        }
+};
 
 
 class PuzzleRunner{
@@ -513,9 +547,13 @@ class PuzzleRunner{
         uint32_t cols = 0;
         vector<vector<char> > map;
         vector<vector<vector<char> > > backtrace;
-        deque<int, pair<int, int>> searcherStorer;
+        Place initialPosition;
+        //deque<int, pair<int, int>> searchContainer;
+        //deque<int, pair<int, int> currentState;
+        deque<Place> searchContainer;
+        deque<Place> currentState;
+        vector<pair<int, pair<int, int>>> placesDiscovered;
     public:
-        
         /*
         Simply throws error if one of the following occurs:
 (done)      - 0 <= num_colors <= 26 (0 colors is valid, it just means that there are no doors)
@@ -524,10 +562,10 @@ class PuzzleRunner{
 (to do)      - Exactly one of --stack/-s and --queue/-q are provided
 (to do)      - The argument to --output/-o (if provided) is either "list" or "map"
 (to do)      - No invalid command line options are provided (such as -x or --eecs281)
-(to do)      - No invalid door or button appears in the map (if <num_colors> == 3 , then 'M' and 'z' are invalid)
-(to do)      - No invalid characters appear in the map ('+' can’t appear in the map, but it could appear in a comment)
-(to do)      - '@' appears exactly once in the input map
-(to do)      - '?' appears exactly once in the input map   
+(done)      - No invalid door or button appears in the map (if <num_colors> == 3 , then 'M' and 'z' are invalid)
+(done)      - No invalid characters appear in the map ('+' can’t appear in the map, but it could appear in a comment)
+(done)      - '@' appears exactly once in the input map
+(done)      - '?' appears exactly once in the input map   
         */
         void throwError(){
             exit(1);
@@ -588,11 +626,76 @@ class PuzzleRunner{
         char roomToChar(int roomColor){
             return static_cast<char>(roomColor + 'a') - 1;
         }
+        //checks if char is ?
+        bool isQuestionMark(char t){
+            return  t == '?';
+        }
+        //checks if char is @
+        bool isAtSymbol(char t){
+            return  t == '@';
+        }
+        bool isValidCharacter(char t){
+            bool found = false;  
+            if(t == '^'){
+                return true;
+            }
+            //running from a to a + numColors (i.e. how many colors past default)
+            for(int i = 'a'; i <= 'a' + numColors; i++){
+                if(i == tolower(t)){
+                    found = true;
+                }
+            }
+            return false;
+        }
+        //checks to ensure all characters in the map are valid
+        void checkMapValidity(){
+            int atCounter = 0;
+            int questionCounter = 0;
+            
+            for(auto &charVec:map){
+                for(int j = 0; j < charVec.size(); j++){
+                    if(isAtSymbol(j)){
+                        atCounter++;
+                    }
+                    else if(isQuestionMark(j)){
+                        questionCounter++;
+                    }
+                    else if(isValidCharacter(charVec[j])){
+                        //maybe code to add here?
+                    }
+                    else{
+                        throwError();
+                    }
+                }
+            }
+            if(atCounter > 1 || questionCounter > 1){
+                throwError();
+            }
+
+        }
+
+        //finds the @ in the map and sets the initialPosition struct to it
+        void findInitialPosition(){
+            int rowCounter = 0;
+            for(auto &charVec:map){
+                for(int j = 0; j < charVec.size(); j++){
+                    if(isAtSymbol(j)){
+                        initialPosition.setValues(charToRoom('^'), rowCounter, j);
+                    }
+                }
+                rowCounter++;
+            }
+            initialPosition.setCameFrom(0);
+        }
+
         void readPuzzle(){
             string junk;
             cin >> numColors >> rows >> cols;
             checkValidInitializing();
             getline(cin, junk);
+            //these call on the newly defined numColors, rows, cols
+            resizeBacktrace();
+            resizeMap();
             //figure out why we need to count row here
             int row = 0;
             string line;
@@ -602,13 +705,96 @@ class PuzzleRunner{
                    row++;
                 }
             }
-        }
+            checkMapValidity();
+            findInitialPosition();
+            //calls on solve puzzle now that the map has been filled in
+            //i.e., start filling search container and current state, filling backtrace
+            bool solutionFound = solvePuzzle();
 
+        }
+        /*
+         - The deque serves as the search_container in the spec
+        - always use .push_back()
+        - when you're supposed to use a stack, use .back and .pop_back()
+        - for a queue, use .front() and .pop_front()
+        */
+
+        bool isButton(Place curr){
+            for(int i = 'a'; i <= 'a' + numColors; i++){
+                if(i == tolower(roomToChar(curr.getColor()))){
+                    return true;
+                }
+            }
+            return false;
+        }
+        void discoverNorth(){
+
+        }
+        void discoverEast(){
+
+        }
+        void discoverSouth(){
+            
+        }
+        void discoverWest(){
+            
+        }
+        //when using queue: .front() and .pop_front()
         bool solveQueue(){
+            //Your solution should faithfully implement the following algorithm:
+            
+            //1. Initially mark all states as not discovered.
+            //done in the creation of Place
+
+            //2. Add the initial state to the search_container and mark it as discovered.
+            searchContainer.push_front(initialPosition);
+           // 3. Loop while the search_container is NOT empty.
+           while(!searchContainer.empty()){
+             // 4. Remove the “next” item from the search_container. This is the current_state, which consists of a 
+             //<color> plus <row> and <col> coordinates { <color>, <row>, <col> }.
+            currentState.push_front(searchContainer.front());
+            searchContainer.pop_front();
+            // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
+            // <button>, there is a chance to add a color change. 
+            //If { <button>, <row>, <col> } is not yet discovered, 
+            //add the color change to the search_container and mark it as discovered. 
+            //Investigation from an active button will result in zero or one states being discovered.
+            Place curr = currentState.front();
+            if(isButton(curr)){
+                for(int i = 0; i < placesDiscovered.size(); i++){
+                    if(placesDiscovered[i].first == curr.getColor()
+                    && placesDiscovered[i].second == make_pair(curr.getRow(), curr.getCol())){
+
+                    }
+                }
+            }
+            else{
+                discoverNorth();
+                discoverEast();
+                discoverSouth();
+                discoverWest();
+            }
+            // 6. If current_state { <color>, <row>, <col> } is NOT standing on an active button, 
+            //there is a chance to add adjacent locations. Discover the following four states, 
+            //provided they are not off the edge of the map, not previously discovered, and not a wall or closed door:
+            // 7. north/up { <color>, <row - 1>, <col> }
+            // 8. east/right { <color>, <row>, <col + 1> }
+            // 9. south/down { <color>, <row + 1>, <col> }
+                //10. west/left { <color>, <row>, <col - 1> }
+           }
+          
+            //11. Repeat from step 3.
+        //
+            return false;
+        }
+       //when using stack: .back() and .pop_back()
+        bool solveStack(){
+            
         /*
             Your solution should faithfully implement the following algorithm:
 
             1. Initially mark all states as not discovered.
+
             2. Add the initial state to the search_container and mark it as discovered.
             3. Loop while the search_container is NOT empty.
             4. Remove the “next” item from the search_container. This is the current_state, which consists of a <color> plus <row> and <col> coordinates { <color>, <row>, <col> }.
@@ -620,10 +806,6 @@ class PuzzleRunner{
             10. west/left { <color>, <row>, <col - 1> }
             11. Repeat from step 3.
         */
-            return false;
-        }
-
-        bool solveStack(){
             return false;
         }
         //solvePuzzle checks if there is a solution to either
