@@ -552,6 +552,25 @@ class PuzzleRunner{
         //bool stack: false if queue mode, true if stack mode
         bool stack = false;
 
+        //if listmode false: print as map, else print as list
+        bool listmode = false;
+
+        //commandline read in:
+        /*
+        prohibits arguments and causes the program to print a helpful message
+        of own design, return 0 to exit
+        --help/-h
+        prohibits arguments and directs the program to use a search container 
+        that behaves like a queue, performing a breadth first search
+        --queue/-q
+         prohibits arguments and directs the program to use a search container 
+        that behaves like a stack, performing a depth first search
+        --stack/-s
+        requires an argument {TYPE} that must either be map or list
+        and directs the program to print solution output in the specified format
+        if --ouput not provided, assume --ouput map
+        --output {TYPE} / -o {TYPE}
+        */
 
 
         void initializeBacktrace(){
@@ -571,6 +590,14 @@ class PuzzleRunner{
             }
         }
     public:
+        void setListMode(bool t){
+            if(t){
+                listmode = true;
+            }
+            else{
+                listmode = false;
+            }
+        }
         /*
         Simply throws error if one of the following occurs:
 (done)      - 0 <= num_colors <= 26 (0 colors is valid, it just means that there are no doors)
@@ -1142,76 +1169,81 @@ class PuzzleRunner{
             }
 
         }
+
+        void getMode(int argc, char * argv[]) {
+            // These are used with getopt_long()
+            opterr = false; // Let us handle all error output for command line options
+            int choice = 0;
+            int index = 0;
+            struct option long_options[] = {
+                // ./project0 --mode (option) nosize (arg with the option named mode)
+                //./project0 -m (option) nosize
+                // ./project0  --help (option) (no required arg)
+                //long option  req or noreq  null    short version
+                {"help", no_argument, nullptr, 'h'},
+                {"queue", no_argument, nullptr, 'q'},
+                {"stack", no_argument, nullptr, 's'},
+                {"output", required_argument, nullptr, 'o'},
+                { nullptr, 0, nullptr, '\0' }, //leave alone this has to be last thing in long options
+            };  // long_options[]
+
+            bool outputMode = false;
+            while ((choice = getopt_long(argc, argv, "o:hqs", long_options, &index)) != -1) {
+                
+                switch (choice) {
+                    case 'o': {  // Need a block here to declare a variable inside a case
+                        string arg{optarg};
+                        if (arg != "map" && arg != "list") {
+                            // The first line of error output has to be a 'fixed' message
+                            // for the autograder to show it to you.
+                            cerr << "Error: invalid mode\n";
+                            // The second line can provide more information, but you
+                            // won't see it on the AG.
+                            cerr << "  I don't recognize: " << arg <<
+                            ". Please provide \"map\" or \"list\" instead\n";
+                            exit(1);
+                        }  // if ..arg valid
+                        if (arg == "map") {
+                            outputMode = true;
+                            listmode = false;
+                        } 
+                        else {
+                            outputMode = true;
+                            listmode = true;
+                        }
+                        break;
+                    }  // case 'o'
+                    case 'q':
+                        stack = false;
+                        exit(0);
+                    case 's':
+                        stack = true;
+                        exit(0);
+                    case 'h':
+                        printHelp(argv);
+                        exit(0);
+
+                    default:
+                        cerr << "Error: invalid option. See -h or --help for details\n";
+                        exit(1);
+                }  // switch ..choice
+            }  // while
+
+            if (!outputMode) {
+                listmode = false;
+            }  // if ..mode
+        }  // getMode()
+
+        // Print help for the user when requested.
+        // argv[0] is the name of the currently executing program
+        void printHelp(char *argv[]) {
+            cout << "Usage:\n";
+            cout << "./puzzle [-o [map|list] | -q | -s | -h] < \"inputfile\" > \"outputfile\" \n";
+            //create a more helpful print message
+        }  // printHelp()
 }; //end of PuzzleRunner Class
 
-// Print help for the user when requested.
-// argv[0] is the name of the currently executing program
-void printHelp(char *argv[]) {
-  cout << "Usage: " << argv[0] << " [-m resize|reserve|nosize] | -h\n";
-  cout << "This program is to help you learn command-line processing,\n";
-  cout << "reading data into a vector, the difference between resize and\n";
-  cout << "reserve and how to properly read until end-of-file." << endl;
-}  // printHelp()
 
-
-
-void getMode(int argc, char * argv[], Options &options) {
-  // These are used with getopt_long()
-  opterr = false; // Let us handle all error output for command line options
-  int choice;
-  int index = 0;
-  option long_options[] = {
-    // ./project0 --mode (option) nosize (arg with the option named mode)
-    //./project0 -m (option) nosize
-    // ./project0  --help (option) (no required arg)
-    //long option  req or noreq  null    short version
-    {"help", no_argument, nullptr, 'h'},
-    {"queue", no_argument, nullptr, 'q'},
-    {"stack", no_argument, nullptr, 's'},
-    {"output", required_argument, nullptr, 'o'},
-    { nullptr, 0, nullptr, '\0' }, //leave alone this has to be last thing in long options
-  };  // long_options[]
-
-  
-  while ((choice = getopt_long(argc, argv, "m:h", long_options, &index)) != -1) {
-    switch (choice) {
-      case 'h':
-        printHelp(argv);
-        exit(0);
-
-      case 'm': {  // Need a block here to declare a variable inside a case
-        string arg{optarg};
-        if (arg != "resize" && arg != "reserve" && arg != "nosize") {
-          // The first line of error output has to be a 'fixed' message
-          // for the autograder to show it to you.
-          cerr << "Error: invalid mode" << endl;
-          // The second line can provide more information, but you
-          // won't see it on the AG.
-          cerr << "  I don't recognize: " << arg << endl;
-          exit(1);
-        }  // if ..arg valid
-
-        if (arg == "reserve") {
-          options.mode = Mode::kReserve;
-        } else if (arg[0] == 'r') {
-          options.mode = Mode::kResize;
-        } else {
-          options.mode = Mode::kNoSize;
-        }  // if ..arg
-        break;
-      }  // case 'm'
-
-      default:
-        cerr << "Error: invalid option" << endl;
-        exit(1);
-    }  // switch ..choice
-  }  // while
-
-  if (options.mode == Mode::kNone) {
-    cerr << "Error: no mode specified" << endl;
-    exit(1);
-  }  // if ..mode
-}  // getMode()
 
 int main(int argc, char *argv[]) {
   // This should be in all of your projects, speeds up I/O
@@ -1219,14 +1251,7 @@ int main(int argc, char *argv[]) {
 
 
   // Get the mode from the command line and read in the data
-  Options options;
-  getMode(argc, argv, options);
-  vector<double> data;
-//   if (options.mode == Mode::kResize)
-//     readWithResize(data);
-//   else if (options.mode == Mode::kReserve)
-//     readWithReserve(data);
-//   else if (options.mode == Mode::kNoSize)
-//     readWithNoSize(data);
+  PuzzleRunner game;
+  game.getMode(argc, argv);
 
 }
