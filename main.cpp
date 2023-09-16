@@ -502,45 +502,56 @@ enum class Mode {
 struct Options {
   Mode mode = Mode::kNone;
 };  // Options{}
-struct Place{
-    private:
-        int color = 0;
-        int row = 0;
-        int column = 0;
-    public:
-        void setVals(int col, int r, int c){
-            color = col;
-            row = r;
-            column = c;
-        }
-        int getColor(){
-            return color;
-        }
-        int getRow(){
-            return row;
-        }
-        int getColumn(){
-            return column;
-        }
-};
+// struct Place{
+//     private:
+//         int color = 0;
+//         int row = 0;
+//         int column = 0;
+//     public:
+//         void setVals(int col, int r, int c){
+//             color = col;
+//             row = r;
+//             column = c;
+//         }
+//         int getColor(){
+//             return color;
+//         }
+//         int getRow(){
+//             return row;
+//         }
+//         int getColumn(){
+//             return column;
+//         }
+// };
 
 
 class PuzzleRunner{
     private: 
-        //when using stack: .back() and .pop_back()
-        //when using queue: .front() and .pop_front()
+        //number of colors past ^
         uint32_t numColors = 0;
+        //number of rows in puzzle
         uint32_t rows = 0;
+        //number of columns in puzzle
         uint32_t cols = 0;
+        //original puzzle map (to perhaps be changed if no solution is found)
         vector<vector<char> > map;
+        //whether puzzle can be solved or not
         bool solutionFound = false;
         //track directions, NESW
         vector<vector<vector<char> > > backtrace;
+        //position where the initial @ is
         pair<int, pair<int, int>> initialPosition;
-        Place solvedPosition;
+        //the position at which the ? was found
+        pair<int, pair<int, int>> solvedPosition;
+        //deque of everything contained in searchContainer
         deque<pair<int, pair<int, int>>> searchContainer;
+        //deque of everything contained in the currentState
         deque<pair<int, pair<int, int>>> currentState;
+        //a vector of all (color, row, column) that have been discovered
         vector<pair<int, pair<int, int>>> placesDiscovered;
+        //bool stack: false if queue mode, true if stack mode
+        bool stack = false;
+
     public:
         /*
         Simply throws error if one of the following occurs:
@@ -610,9 +621,7 @@ class PuzzleRunner{
             return static_cast<uint32_t>(tile - 'a') + 1;
         }
 
-        /*
-        converts a given roomColor (in int form) to the character it matches
-        */
+        //converts a given roomColor (in int form) to the character it matches
         char roomToChar(int roomColor){
             return static_cast<char>(roomColor + 'a') - 1;
         }
@@ -624,9 +633,10 @@ class PuzzleRunner{
         bool isAtSymbol(char t){
             return  t == '@';
         }
+        //checks if character is valid
         bool isValidCharacter(char t){
             bool found = false;  
-            if(t == '^' || t == '?'){
+            if(t == '^' || t == '?' || t == '#'){
                 return true;
             }
             //running from a to a + numColors (i.e. how many colors past default)
@@ -736,40 +746,6 @@ class PuzzleRunner{
             }
         }
 
-        void readPuzzle(){
-            string junk;
-            cin >> numColors >> rows >> cols;
-            checkValidInitializing();
-            getline(cin, junk);
-            //these call on the newly defined numColors, rows, cols
-            resizeBacktrace();
-            resizeMap();
-            //figure out why we need to count row here
-            int row = 0;
-            string line;
-            while(getline(cin, line )){
-                if(!isComment(line)){
-                   map.push_back(lineConvert(line));    //might be incorrect
-                   row++;
-                }
-            }
-            checkMapValidity();
-            findInitialPosition();
-            //calls on solve puzzle now that the map has been filled in
-            //i.e., start filling search container and current state, filling backtrace
-            solvePuzzle();
-            //if solution was found, print backtrace w solution
-            if(solutionFound){
-
-            }
-            //else print no solution + information to follow
-            else{
-                cout << "No solution.\nDiscovered:";
-                rewriteMapNoSolution();
-                printMap();
-            }
-
-        }
         /*
          - The deque serves as the search_container in the spec
         - always use .push_back()
@@ -908,7 +884,7 @@ class PuzzleRunner{
                 pair<int,pair<int,int>> curr = currentState.front();
                 if(isQuestionMark(curr.first)){
                     solutionFound = true;
-                    solvedPosition = 
+                    solvedPosition = curr;
                 }
                 else if(isButton(curr) && !gotDiscovered(curr)){
                     //If { <button>, <row>, <col> } is not yet discovered, 
@@ -951,12 +927,6 @@ class PuzzleRunner{
 
             //if stack
             solveStack();
-        }
-        void printNoSolution(){
-            //now print the map as it was provided upon input
-            //however, with all undiscovered locations replaced with #
-            //this includes empty floors, doors, buttons, and the target,
-            //if no sultion, target will always be replaced with #
         }
         void printListOutput(){
         /*
@@ -1059,25 +1029,46 @@ class PuzzleRunner{
         */
         }
 
-        //calls on either list or map outputs to be printed
-        void printSolved(){
-            //if --ouput/-o list
-            printListOutput();
-            //if --output/-o map
-            printMapOutput();
-        }
-        
-        //runs the whole program, starting by a call to see if the puzzle is solvable
-        void play(){
-            if(!solvePuzzle){
-                cout << "No solution.\nDiscovered:";
-                printNoSolution();
+        void readPuzzle(){
+            string junk;
+            cin >> numColors >> rows >> cols;
+            checkValidInitializing();
+            getline(cin, junk);
+            //these call on the newly defined numColors, rows, cols
+            resizeBacktrace();
+            resizeMap();
+            //figure out why we need to count row here
+            int row = 0;
+            string line;
+            while(getline(cin, line )){
+                if(!isComment(line)){
+                   map.push_back(lineConvert(line));    //might be incorrect
+                   row++;
+                }
             }
+            checkMapValidity();
+            findInitialPosition();
+            //calls on solve puzzle now that the map has been filled in
+            //i.e., start filling search container and current state, filling backtrace
+            solvePuzzle();
+            //if solution was found, print backtrace w solution
+            if(solutionFound){
+                //if --ouput/-o list
+                printListOutput();
+                //if --output/-o map
+                printMapOutput();
+                    //with stack
+                    //with queue
+                
+            }
+            //else print no solution + information to follow
             else{
-                printSolved();
+                cout << "No solution.\nDiscovered:";
+                rewriteMapNoSolution();
+                printMap();
             }
-        }
 
+        }
 }; //end of PuzzleRunner Class
 
 // Print help for the user when requested.
