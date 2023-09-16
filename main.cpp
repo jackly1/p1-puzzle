@@ -777,9 +777,12 @@ class PuzzleRunner{
         - for a queue, use .front() and .pop_front()
         */
 
-        bool isButton(pair<int,pair<int,int>> &curr){
-            for(int i = 'a'; i <= 'a' + numColors; i++){
-                if(i == tolower(roomToChar(curr.first))){
+        bool isButton(char &curr){
+            if(curr == '^'){
+                return true;
+            }
+            for(char i = 'a'; i < 'a' + numColors; i++){
+                if(i == curr){
                     return true;
                 }
             }
@@ -900,7 +903,8 @@ class PuzzleRunner{
             //2. Add the initial state to the search_container and mark it as discovered.
             searchContainer.push_front(initialPosition);
             backtrace[initialPosition.first][initialPosition.second.first][initialPosition.second.second] = '@';
-           // 3. Loop while the search_container is NOT empty.
+            char currentColor = '^';
+            // 3. Loop while the search_container is NOT empty.
             while(!searchContainer.empty() && !solutionFound){
                 // 4. Remove the “next” item from the search_container. This is the current_state, which consists of a 
                 //<color> plus <row> and <col> coordinates { <color>, <row>, <col> }.
@@ -909,21 +913,29 @@ class PuzzleRunner{
                 // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
                 // <button>, there is a chance to add a color change. 
                 pair<int,pair<int,int>> curr = currentState.front();
-                if(isQuestionMark(curr.first)){
+                if(isQuestionMark(map[curr.second.first][curr.second.second])){
                     solutionFound = true;
                     solvedPosition = curr;
                 }
-                else if(isButton(curr) && !gotDiscovered(curr)){
-                    //If { <button>, <row>, <col> } is not yet discovered, 
-                    //add the color change to the search_container and mark it as discovered. 
-                    searchContainer.push_front(curr);
-                    backtrace[curr.first][curr.second.first][curr.second.second] = roomToChar(curr.first);
-                    placesDiscovered.push_back(curr);
+                else if(isButton(map[curr.second.first][curr.second.second])){
+                    pair<int,pair<int,int>> colorChangedCurr = 
+                        makeCoordinate(charToRoom(map[curr.second.first][curr.second.second])
+                            , curr.second.first, curr.second.second);
+                    if(!gotDiscovered(colorChangedCurr)){
+                        //If { <button>, <row>, <col> } is not yet discovered, 
+                        //add the color change to the search_container and mark it as discovered. 
+                        searchContainer.push_front(colorChangedCurr);
+                        backtrace[colorChangedCurr.first][colorChangedCurr.second.first][colorChangedCurr.second.second] 
+                                = roomToChar(currentColor);
+                        currentColor = colorChangedCurr.first;
+                        placesDiscovered.push_back(colorChangedCurr);
+                    }
                     //Investigation from an active button will result in zero or one states being discovered.
                 }//case where undiscovered button
                 else{
                     lookDirection(curr);
                 }
+                currentState.pop_front();
             }
         }
        //when using stack: .back() and .pop_back()
@@ -986,8 +998,66 @@ class PuzzleRunner{
                 }
             }
         }
+
+        void pathFinder(){
+            pair<int,pair<int,int>> currentPosition = solvedPosition;
+            bool cameFromButton = false;
+            while(currentPosition != initialPosition){
+                int currColor = currentPosition.first;
+                int currRow = currentPosition.second.first;
+                int currColumn = currentPosition.second.second;
+                if(currentPosition == solvedPosition){
+                    backtrace[currColor][currRow][currColumn] = '?';
+                }
+                if(isButton(backtrace[currColor][currRow][currColumn])){
+                    char roomCameFrom = backtrace[currColor][currRow][currColumn];
+                    backtrace[currColor][currRow][currColumn] = '@';
+                    currentPosition = makeCoordinate(roomToChar(roomCameFrom), currRow, currColumn);
+                    cameFromButton = true;
+                }
+                else{
+                    if(cameFromButton){
+                        if(backtrace[currColor][currRow][currColumn] == 'N'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'w'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                        }
+                        cameFromButton = false;
+                    }
+                    else{
+                        if(backtrace[currColor][currRow][currColumn] == 'N'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'w'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                        }
+                    }
+                }
+            }
+        }
         void printMapOutput(){
-        
+            
             // - Print the map similar to the way it was given in the input 
             // (excluding the map parameters and any comments). 
             // - Print each color in a separate map one after the other,
@@ -995,68 +1065,41 @@ class PuzzleRunner{
             // - Each color map should be preceded by a comment indicating the 
             // color being output and include the following replacements:
             //     - On the solution path between the starting location and target, 
-            //     empty floors and open doors should be replaced with '+'
+            //     empty floors and open doors should be replaced with '+' (done)
             //     - On the solution path, replace inactive buttons with '%'
             //     on the map where they were discovered and with '@' on the map that
-            //     matches the button
+            //     matches the button (done)
             //     - On the //color ^ map, all trapped buttons not on the solution path
             //     marked with '.'
             //     - On the //color a map, all matching buttons a and doors A not on the 
-            //     solution path are replaced with '.'
-            //     Color maps following 'a' replace buttons and doors with '.', similar to 'a'
-            // - This is map output using a queue search_container; it begins with 
-            // the starting location @ in the upper left of the //color ^ map,
-            // moves east to the + and then south onto the a button, which is pressed, 
-            // and replcaed by %. he a button press moves the solution path to the 
-            // // color a map at the same location, which is replaced by @. 
-            // Then the trail of + shows travel north and east until button b is 
-            // pressed and replaced by %. The b button press moves the solution path 
-            // to the // color b map at the same location, which is replaced by @, 
-            // then the trail of + shows travel west then south then west until 
-            // the target is discovered. The starting location is only displayed 
-            // on the ^ map, but the target is displayed on all color maps. 
+            //     solution path are replaced with '.' (NEED TO DO, ALSO TWEAK THE BUTTONS MAYE???)
             
-            // Map output with queue:
-            //make sure to switch symbols for path finder before hand
+            cout << "// color '^'\n";
             for(int r = 0; r < rows; r++){
                 for(int c = 0; c < cols; c++){
-                    cout << backtrace[0][r][c];
+                    if(backtrace[0][r][c] != ' '){
+                            cout << backtrace[0][r][c];
+                    } 
+                    else{
+                        cout << map[r][c];
+                    }
                 }
                 cout << "\n";
-            }
-            //     // color ^
-            //     @  +  .  A  .  .  b
-            //     .  %  .  #  B  #  #
-            //     #  #  #  #  .  .  .
-            //     ?  .  .  B  .  .  .
-            //     // color a
-            //     .  +  +  +  +  +  %
-            //     .  @  .  #  B  #  #
-            //     #  #  #  #  .  .  .
-            //     ?  .  .  B  .  ^  ^
-            //     // color b
-            //     .  .  .  A  +  +  @  
-            //     .  a  .  #  +  #  #
-            //     #  #  #  #  +  .  .
-            //     ?  +  +  +  +  ^  ^
-            // Map output with stack:
-            //     // color ^
-            //     @  .  .  A  .  .  b
-            //     .  %  .  #  B  #  #
-            //     #  #  #  #  .  .  .
-            //     ?  .  .  B  .  .  .
-            //     // color a
-            //     .  +  +  +  +  +  %
-            //     .  @  .  #  B  #  #
-            //     #  #  #  #  .  .  .
-            //     ?  .  .  B  .  ^  ^
-            //     // color b
-            //     .  .  .  A  +  +  @  
-            //     .  a  .  #  +  #  #
-            //     #  #  #  #  +  .  .
-            //     ?  +  +  +  +  ^  ^
-            // normally a bigger difference can be found in a more complicated map
-        
+            } //for default color
+            for(char t = 'a'; t < 'a' + numColors; t++){
+                cout << "// color " << t << "\n";
+                for(int r = 0; r < rows; r++){
+                    for(int c = 0; c < cols; c++){
+                        if(backtrace[charToRoom(t)][r][c] != ' '){
+                            cout << backtrace[charToRoom(t)][r][c];
+                        } 
+                        else{
+                            cout << map[r][c];
+                        }
+                    }
+                cout << "\n";
+                }
+            } // for all colors
         }
 
         void readPuzzle(){
