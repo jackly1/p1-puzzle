@@ -552,6 +552,24 @@ class PuzzleRunner{
         //bool stack: false if queue mode, true if stack mode
         bool stack = false;
 
+
+
+        void initializeBacktrace(){
+            //initialize default layer
+            for(int r = 0; r < rows; r++){
+                for(int c = 0; c < cols; c++){
+                    backtrace[0][r][c] = ' ';
+                }
+            }
+            //initialize every further layer
+            for(char t = 'a'; t < 'a' + numColors; t++){
+                for(int r = 0; r < rows; r++){
+                    for(int c = 0; c < cols; c++){
+                        backtrace[charToRoom(t)][r][c] = ' ';
+                    }
+                }
+            }
+        }
     public:
         /*
         Simply throws error if one of the following occurs:
@@ -618,11 +636,17 @@ class PuzzleRunner{
         converts a given tile (in char form) to the integer it matches
         */
         int charToRoom(char tile){
+            if(tile == '^'){
+                return 0;
+            }
             return static_cast<uint32_t>(tile - 'a') + 1;
         }
 
         //converts a given roomColor (in int form) to the character it matches
         char roomToChar(int roomColor){
+            if(roomColor == 0){
+                return '^';
+            }
             return static_cast<char>(roomColor + 'a') - 1;
         }
         //checks if char is ?
@@ -788,6 +812,9 @@ class PuzzleRunner{
             }
             return found;
         }
+        void printCoord(int color, int row, int column){
+            cout << "(" << roomToChar(color) << ", " << "(" << row << "," << column << "))\n";
+        }
         //returns whether the provided coordinate is a wall given a color
         bool isWall(const int &currColor, const int &walkingColor){
             char currChar = roomToChar(currColor);
@@ -928,105 +955,108 @@ class PuzzleRunner{
             //if stack
             solveStack();
         }
-        void printListOutput(){
-        /*
-            For list output, print the list of states in the solution path from 
-            the starting location to the target, inclusive. 
-            Use the format (<color>, (<row>, <col>)) with <color> being a 
-            lowercase letter or '^' to indicate the active color, 
-            <row> being the 0-indexed row of the location, and <col> being 
-            the 0-indexed column of the location. The first state printed 
-            should be '^' with the starting location, and the last state 
-            printed should be the current color when the location of the target 
-            was first discovered by the algorithm.
 
-            List mode output using a queue search_container:
-                (^, (0, 0))
-                (^, (0, 1))
-                (^, (1, 1))
-                (a, (1, 1))
-                (a, (0, 1))
-                (a, (0, 2))
-                (a, (0, 3))
-                (a, (0, 4))
-                (a, (0, 5))
-                (a, (0, 6))
-                (b, (0, 6))
-                (b, (0, 5))
-                (b, (0, 4))
-                (b, (1, 4))
-                (b, (2, 4))
-                (b, (3, 4))
-                (b, (3, 3))
-                (b, (3, 2))
-                (b, (3, 1))
-                (b, (3, 0))
-        */
+
+        // For list output, print the list of states in the solution path from 
+        // the starting location to the target, inclusive. 
+        // Use the format (<color>, (<row>, <col>)) with <color> being a 
+        // lowercase letter or '^' to indicate the active color, 
+        // <row> being the 0-indexed row of the location, and <col> being 
+        // the 0-indexed column of the location. The first state printed 
+        // should be '^' with the starting location, and the last state 
+        // printed should be the current color when the location of the target 
+        // was first discovered by the algorithm.
+        void printListOutput(){
+            //for default case
+            for(int r = 0; r < rows; r++){
+                for(int c = 0; c < cols; c++){
+                    if(backtrace[charToRoom('^')][r][c] != ' '){
+                        printCoord(0, r, c);
+                    }
+                }
+            }
+            //for all following cases
+            for(char t = 'a'; t < 'a' + numColors; t++){
+                for(int r = 0; r < rows; r++){
+                    for(int c = 0; c < cols; c++){
+                        if(backtrace[charToRoom(t)][r][c] != ' '){
+                            printCoord(charToRoom(t), r, c);
+                        }
+                    }
+                }
+            }
         }
         void printMapOutput(){
-        /*
-            - Print the map similar to the way it was given in the input 
-            (excluding the map parameters and any comments). 
-            - Print each color in a separaate map one after the other,
-            starting with ^ and working alphabetically from A to all others
-            - Each color map should be preceded by a comment indicating the 
-            color being output and include the following replacements:
-                - On the solution path between the starting location and target, 
-                empty floors and open doors should be replaced with '+'
-                - On the solution path, replace inactive buttons with '%'
-                on the map where they were discovered and with '@' on the map that
-                matches the button
-                - On the //color ^ map, all trapped buttons not on the solution path
-                marked with '.'
-                - On the //color a map, all matching buttons a and doors A not on the 
-                solution path are replaced with '.'
-                Color maps following 'a' replace buttons and doors with '.', similar to 'a'
-            - This is map output using a queue search_container; it begins with 
-            the starting location @ in the upper left of the //color ^ map,
-            moves east to the + and then south onto the a button, which is pressed, 
-            and replcaed by %. he a button press moves the solution path to the 
-            // color a map at the same location, which is replaced by @. 
-            Then the trail of + shows travel north and east until button b is 
-            pressed and replaced by %. The b button press moves the solution path 
-            to the // color b map at the same location, which is replaced by @, 
-            then the trail of + shows travel west then south then west until 
-            the target is discovered. The starting location is only displayed 
-            on the ^ map, but the target is displayed on all color maps. 
+        
+            // - Print the map similar to the way it was given in the input 
+            // (excluding the map parameters and any comments). 
+            // - Print each color in a separate map one after the other,
+            // starting with ^ and working alphabetically from A to all others
+            // - Each color map should be preceded by a comment indicating the 
+            // color being output and include the following replacements:
+            //     - On the solution path between the starting location and target, 
+            //     empty floors and open doors should be replaced with '+'
+            //     - On the solution path, replace inactive buttons with '%'
+            //     on the map where they were discovered and with '@' on the map that
+            //     matches the button
+            //     - On the //color ^ map, all trapped buttons not on the solution path
+            //     marked with '.'
+            //     - On the //color a map, all matching buttons a and doors A not on the 
+            //     solution path are replaced with '.'
+            //     Color maps following 'a' replace buttons and doors with '.', similar to 'a'
+            // - This is map output using a queue search_container; it begins with 
+            // the starting location @ in the upper left of the //color ^ map,
+            // moves east to the + and then south onto the a button, which is pressed, 
+            // and replcaed by %. he a button press moves the solution path to the 
+            // // color a map at the same location, which is replaced by @. 
+            // Then the trail of + shows travel north and east until button b is 
+            // pressed and replaced by %. The b button press moves the solution path 
+            // to the // color b map at the same location, which is replaced by @, 
+            // then the trail of + shows travel west then south then west until 
+            // the target is discovered. The starting location is only displayed 
+            // on the ^ map, but the target is displayed on all color maps. 
             
-            Map output with queue:
-                // color ^
-                @  +  .  A  .  .  b
-                .  %  .  #  B  #  #
-                #  #  #  #  .  .  .
-                ?  .  .  B  .  .  .
-                // color a
-                .  +  +  +  +  +  %
-                .  @  .  #  B  #  #
-                #  #  #  #  .  .  .
-                ?  .  .  B  .  ^  ^
-                // color b
-                .  .  .  A  +  +  @  
-                .  a  .  #  +  #  #
-                #  #  #  #  +  .  .
-                ?  +  +  +  +  ^  ^
-            Map output with stack:
-                // color ^
-                @  .  .  A  .  .  b
-                .  %  .  #  B  #  #
-                #  #  #  #  .  .  .
-                ?  .  .  B  .  .  .
-                // color a
-                .  +  +  +  +  +  %
-                .  @  .  #  B  #  #
-                #  #  #  #  .  .  .
-                ?  .  .  B  .  ^  ^
-                // color b
-                .  .  .  A  +  +  @  
-                .  a  .  #  +  #  #
-                #  #  #  #  +  .  .
-                ?  +  +  +  +  ^  ^
-            normally a bigger difference can be found in a more complicated map
-        */
+            // Map output with queue:
+            //make sure to switch symbols for path finder before hand
+            for(int r = 0; r < rows; r++){
+                for(int c = 0; c < cols; c++){
+                    cout << backtrace[0][r][c];
+                }
+                cout << "\n";
+            }
+            //     // color ^
+            //     @  +  .  A  .  .  b
+            //     .  %  .  #  B  #  #
+            //     #  #  #  #  .  .  .
+            //     ?  .  .  B  .  .  .
+            //     // color a
+            //     .  +  +  +  +  +  %
+            //     .  @  .  #  B  #  #
+            //     #  #  #  #  .  .  .
+            //     ?  .  .  B  .  ^  ^
+            //     // color b
+            //     .  .  .  A  +  +  @  
+            //     .  a  .  #  +  #  #
+            //     #  #  #  #  +  .  .
+            //     ?  +  +  +  +  ^  ^
+            // Map output with stack:
+            //     // color ^
+            //     @  .  .  A  .  .  b
+            //     .  %  .  #  B  #  #
+            //     #  #  #  #  .  .  .
+            //     ?  .  .  B  .  .  .
+            //     // color a
+            //     .  +  +  +  +  +  %
+            //     .  @  .  #  B  #  #
+            //     #  #  #  #  .  .  .
+            //     ?  .  .  B  .  ^  ^
+            //     // color b
+            //     .  .  .  A  +  +  @  
+            //     .  a  .  #  +  #  #
+            //     #  #  #  #  +  .  .
+            //     ?  +  +  +  +  ^  ^
+            // normally a bigger difference can be found in a more complicated map
+        
         }
 
         void readPuzzle(){
