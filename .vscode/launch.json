@@ -6,16 +6,19 @@
             "type": "lldb",
             "request": "launch",
             "preLaunchTask": "build debug executable",
-            "program": "${workspaceFolder}/project0_debug",
+            "program": "${workspaceFolder}/puzzle_debug",
             "stdio": [
                 null, // redirect stdin
                 null, // redirect stdout
                 null // redirect stderr
             ],
-            "args": ["-m", 
-            "reserve", 
+            "args": ["--queue", 
+            "-o",
+            "map", 
             "<", 
-            "sample-n.txt"],
+            "spec-simple.txt",
+            ">",
+            "output.txt"],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",
             "postDebugTask": "clean workspace"

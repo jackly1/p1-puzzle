@@ -540,15 +540,15 @@ class PuzzleRunner{
         //track directions, NESW
         vector<vector<vector<char> > > backtrace;
         //position where the initial @ is
-        pair<int, pair<int, int>> initialPosition;
+        pair<uint32_t, pair<uint32_t, uint32_t>> initialPosition;
         //the position at which the ? was found
-        pair<int, pair<int, int>> solvedPosition;
+        pair<uint32_t, pair<uint32_t, uint32_t>> solvedPosition;
         //deque of everything contained in searchContainer
-        deque<pair<int, pair<int, int>>> searchContainer;
+        deque<pair<uint32_t, pair<uint32_t, uint32_t>>> searchContainer;
         //deque of everything contained in the currentState
-        deque<pair<int, pair<int, int>>> currentState;
+        deque<pair<uint32_t, pair<uint32_t, uint32_t>>> currentState;
         //a vector of all (color, row, column) that have been discovered
-        vector<pair<int, pair<int, int>>> placesDiscovered;
+        vector<pair<uint32_t, pair<uint32_t, uint32_t>>> placesDiscovered;
         //bool stack: false if queue mode, true if stack mode
         bool stack = false;
 
@@ -575,15 +575,15 @@ class PuzzleRunner{
 
         void initializeBacktrace(){
             //initialize default layer
-            for(int r = 0; r < rows; r++){
-                for(int c = 0; c < cols; c++){
+            for(uint32_t r = 0; r < rows; r++){
+                for(uint32_t c = 0; c < cols; c++){
                     backtrace[0][r][c] = ' ';
                 }
             }
             //initialize every further layer
-            for(char t = 'a'; t < 'a' + numColors; t++){
-                for(int r = 0; r < rows; r++){
-                    for(int c = 0; c < cols; c++){
+            for(char t = 'a'; t < 'a' + (int)numColors; t++){
+                for(uint32_t r = 0; r < rows; r++){
+                    for(uint32_t c = 0; c < cols; c++){
                         backtrace[charToRoom(t)][r][c] = ' ';
                     }
                 }
@@ -630,7 +630,7 @@ class PuzzleRunner{
         }
         vector<char> lineConvert(string l){
             vector<char> toReturn;
-            int numCols = 0;
+            uint32_t numCols = 0;
             for(string::iterator it = l.begin(); it != l.end(); it++){
                 toReturn.push_back(*it);
                 numCols++;
@@ -656,13 +656,13 @@ class PuzzleRunner{
                 throwError();
             }
         }
-        pair<int,pair<int,int>> makeCoordinate(int col, int r, int c){
+        pair<uint32_t,pair<uint32_t,uint32_t>> makeCoordinate(uint32_t col, uint32_t r, uint32_t c){
             return make_pair(col, make_pair(r,c));
         }
         /*
         converts a given tile (in char form) to the integer it matches
         */
-        int charToRoom(char tile){
+        uint32_t charToRoom(char tile){
             if(tile == '^'){
                 return 0;
             }
@@ -670,7 +670,7 @@ class PuzzleRunner{
         }
 
         //converts a given roomColor (in int form) to the character it matches
-        char roomToChar(int roomColor){
+        char roomToChar(uint32_t roomColor){
             if(roomColor == 0){
                 return '^';
             }
@@ -685,23 +685,23 @@ class PuzzleRunner{
             return  t == '@';
         }
         //checks if character is valid
-        bool isValidCharacter(char t){
-            bool found = false;  
+        bool isValidCharacter(char t){ 
+            bool found = false;
             if(t == '^' || t == '?' || t == '#'){
                 return true;
             }
             //running from a to a + numColors (i.e. how many colors past default)
-            for(int i = 'a'; i <= 'a' + numColors; i++){
+            for(char i = 'a'; i < 'a' + (int)numColors; i++){
                 if(i == tolower(t)){
                     found = true;
                 }
             }
-            return false;
+            return found;
         }
         //checks to ensure all characters in the map are valid
         void checkMapValidity(){
-            int atCounter = 0;
-            int questionCounter = 0;
+            uint32_t atCounter = 0;
+            uint32_t questionCounter = 0;
             
             for(auto &charVec:map){
                 for(vector<char>::iterator it = charVec.begin(); it != charVec.end(); it++){
@@ -728,9 +728,9 @@ class PuzzleRunner{
 
         //finds the @ in the map and sets the initialPosition struct to it
         void findInitialPosition(){
-            int rowCounter = 0;
+            uint32_t rowCounter = 0;
             for(auto &charVec:map){
-                int colCounter = 0;
+                uint32_t colCounter = 0;
                 for(vector<char>::iterator it = charVec.begin(); it != charVec.end(); it++){
                     if(isAtSymbol(*it)){
                         initialPosition = makeCoordinate(charToRoom('^'),rowCounter, colCounter);
@@ -742,14 +742,13 @@ class PuzzleRunner{
         }
 
 
-        bool existsInBacktrace(const pair<int, pair<int,int>> &curr){
-            bool existsInAColor = false;
+        bool existsInBacktrace(const pair<uint32_t, pair<uint32_t,uint32_t>> &curr){
             if(gotDiscovered(curr)){
                 return true;
             }
             if(numColors > 0){
-                for(char counter = 'a'; counter < 'a' + numColors; counter ++){
-                    if(gotDiscovered(makeCoordinate(counter, curr.second.first,curr.second.second))){
+                for(char counter = 'a'; counter < 'a' + (int)numColors; counter ++){
+                    if(gotDiscovered(makeCoordinate(charToRoom(counter), curr.second.first,curr.second.second))){
                         return true;
                     }
                 }
@@ -762,11 +761,11 @@ class PuzzleRunner{
         buttons, and the target. If there is no solution to the puzzle, 
         the target will always be replaced with '#'.*/
         void rewriteMapNoSolution(){
-            int rowCounter = 0;
+            uint32_t rowCounter = 0;
             for(auto &charVec:map){
-                int columnCounter = 0;
+                uint32_t columnCounter = 0;
                 for(vector<char>::iterator it = charVec.begin(); it != charVec.end(); it++){
-                    if(!existsInBacktrace(makeCoordinate(*it, rowCounter, columnCounter))){
+                    if(!existsInBacktrace(makeCoordinate(charToRoom(*it), rowCounter, columnCounter))){
                         *it = '#';
                     }
                     columnCounter++;
@@ -808,7 +807,7 @@ class PuzzleRunner{
             if(curr == '^'){
                 return true;
             }
-            for(char i = 'a'; i < 'a' + numColors; i++){
+            for(char i = 'a'; i < 'a' + (int)numColors; i++){
                 if(i == curr){
                     return true;
                 }
@@ -817,9 +816,9 @@ class PuzzleRunner{
         }
 
         //returns whether the provided coordinate is out of bounds or not
-        bool isValidCoordinate(const pair<int,pair<int,int>> &toWalkOn){
-            int r = toWalkOn.second.first;
-            int c = toWalkOn.second.second;
+        bool isValidCoordinate(const pair<uint32_t,pair<uint32_t,uint32_t>> &toWalkOn){
+            uint32_t r = toWalkOn.second.first;
+            uint32_t c = toWalkOn.second.second;
             if(r < 0 || r >= rows || c < 0 || c >= cols){
                 return false;
             }
@@ -835,18 +834,18 @@ class PuzzleRunner{
             if(curr == tolower(comp)){
                 return true;
             }
-            for(char i = curr; i < 'a' + numColors; i ++){
+            for(char i = curr; i < 'a' + (int)numColors; i ++){
                 if(comp == i){
                     found = true;
                 }
             }
             return found;
         }
-        void printCoord(int color, int row, int column){
+        void printCoord(uint32_t color, uint32_t row, uint32_t column){
             cout << "(" << roomToChar(color) << ", " << "(" << row << "," << column << "))\n";
         }
         //returns whether the provided coordinate is a wall given a color
-        bool isWall(const int &currColor, const int &walkingColor){
+        bool isWall(const uint32_t &currColor, const uint32_t &walkingColor){
             char currChar = roomToChar(currColor);
             char toWalk = roomToChar(walkingColor);
             if(toWalk == '#'){
@@ -854,12 +853,13 @@ class PuzzleRunner{
             }
             else if(toWalk != '.' && toWalk != '@' && toWalk != '?'
                 && !isValidWalkingColor(currChar, toWalk)){
-                return false;
+                return true;
             }
+            return false;
         }
         
         //given two coordinates, returns whether the second is walkable or not
-        bool isWalkable(const pair<int, pair<int,int>> &curr, const pair<int,pair<int,int>> &toWalkOn){
+        bool isWalkable(const pair<uint32_t, pair<uint32_t,uint32_t>> &curr, const pair<uint32_t,pair<uint32_t,uint32_t>> &toWalkOn){
             if(!isValidCoordinate(toWalkOn)){
                 return false;
             }
@@ -873,8 +873,8 @@ class PuzzleRunner{
         }
         
         //runs through the discovered vector seeing if the curr location has been discovered
-        bool gotDiscovered(const pair<int,pair<int,int>> &curr){
-            for(int i = 0; i < placesDiscovered.size(); i++){
+        bool gotDiscovered(const pair<uint32_t,pair<uint32_t,uint32_t>> &curr){
+            for(uint32_t i = 0; i < placesDiscovered.size(); i++){
                 if(placesDiscovered[i].first == curr.first
                 && placesDiscovered[i].second == curr.second){
                     return true;
@@ -884,14 +884,14 @@ class PuzzleRunner{
         }
 
         //looks north, east, south, west, if possible
-        void lookDirection(pair<int,pair<int,int>> &curr){
-            int currentColor = curr.first;
-            int currentRow = curr.second.first;
-            int currentCol = curr.second.second;
-            pair<int, pair<int, int>> north = makeCoordinate(currentColor, currentRow - 1, currentCol);
-            pair<int, pair<int, int>> east = makeCoordinate(currentColor, currentRow, currentCol + 1);
-            pair<int, pair<int, int>> south = makeCoordinate(currentColor, currentRow + 1, currentCol);
-            pair<int, pair<int, int>> west = makeCoordinate(currentColor, currentRow, currentCol - 1);
+        void lookDirection(pair<uint32_t,pair<uint32_t,uint32_t>> &curr){
+            uint32_t currentColor = curr.first;
+            uint32_t currentRow = curr.second.first;
+            uint32_t currentCol = curr.second.second;
+            pair<uint32_t, pair<uint32_t, uint32_t>> north = makeCoordinate(currentColor, currentRow - 1, currentCol);
+            pair<uint32_t, pair<uint32_t, uint32_t>> east = makeCoordinate(currentColor, currentRow, currentCol + 1);
+            pair<uint32_t, pair<uint32_t, uint32_t>> south = makeCoordinate(currentColor, currentRow + 1, currentCol);
+            pair<uint32_t, pair<uint32_t, uint32_t>> west = makeCoordinate(currentColor, currentRow, currentCol - 1);
             //provided they are not off the edge of the map, not previously discovered,
             // and not a wall or closed door:
                 // 7. north/up { <color>, <row - 1>, <col> }
@@ -939,13 +939,13 @@ class PuzzleRunner{
                 searchContainer.pop_front();
                 // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
                 // <button>, there is a chance to add a color change. 
-                pair<int,pair<int,int>> curr = currentState.front();
+                pair<uint32_t,pair<uint32_t,uint32_t>> curr = currentState.front();
                 if(isQuestionMark(map[curr.second.first][curr.second.second])){
                     solutionFound = true;
                     solvedPosition = curr;
                 }
                 else if(isButton(map[curr.second.first][curr.second.second])){
-                    pair<int,pair<int,int>> colorChangedCurr = 
+                    pair<uint32_t,pair<uint32_t,uint32_t>> colorChangedCurr = 
                         makeCoordinate(charToRoom(map[curr.second.first][curr.second.second])
                             , curr.second.first, curr.second.second);
                     if(!gotDiscovered(colorChangedCurr)){
@@ -953,8 +953,8 @@ class PuzzleRunner{
                         //add the color change to the search_container and mark it as discovered. 
                         searchContainer.push_front(colorChangedCurr);
                         backtrace[colorChangedCurr.first][colorChangedCurr.second.first][colorChangedCurr.second.second] 
-                                = roomToChar(currentColor);
-                        currentColor = colorChangedCurr.first;
+                                = currentColor;
+                        currentColor = roomToChar(colorChangedCurr.first);
                         placesDiscovered.push_back(colorChangedCurr);
                     }
                     //Investigation from an active button will result in zero or one states being discovered.
@@ -1007,17 +1007,17 @@ class PuzzleRunner{
         // was first discovered by the algorithm.
         void printListOutput(){
             //for default case
-            for(int r = 0; r < rows; r++){
-                for(int c = 0; c < cols; c++){
+            for(uint32_t r = 0; r < rows; r++){
+                for(uint32_t c = 0; c < cols; c++){
                     if(backtrace[charToRoom('^')][r][c] != ' '){
                         printCoord(0, r, c);
                     }
                 }
             }
             //for all following cases
-            for(char t = 'a'; t < 'a' + numColors; t++){
-                for(int r = 0; r < rows; r++){
-                    for(int c = 0; c < cols; c++){
+            for(char t = 'a'; t < 'a' + (int)numColors; t++){
+                for(uint32_t r = 0; r < rows; r++){
+                    for(uint32_t c = 0; c < cols; c++){
                         if(backtrace[charToRoom(t)][r][c] != ' '){
                             printCoord(charToRoom(t), r, c);
                         }
@@ -1027,19 +1027,19 @@ class PuzzleRunner{
         }
 
         void pathFinder(){
-            pair<int,pair<int,int>> currentPosition = solvedPosition;
+            pair<uint32_t,pair<uint32_t,uint32_t>> currentPosition = solvedPosition;
             bool cameFromButton = false;
             while(currentPosition != initialPosition){
-                int currColor = currentPosition.first;
-                int currRow = currentPosition.second.first;
-                int currColumn = currentPosition.second.second;
+                uint32_t currColor = currentPosition.first;
+                uint32_t currRow = currentPosition.second.first;
+                uint32_t currColumn = currentPosition.second.second;
                 if(currentPosition == solvedPosition){
                     backtrace[currColor][currRow][currColumn] = '?';
                 }
                 if(isButton(backtrace[currColor][currRow][currColumn])){
                     char roomCameFrom = backtrace[currColor][currRow][currColumn];
                     backtrace[currColor][currRow][currColumn] = '@';
-                    currentPosition = makeCoordinate(roomToChar(roomCameFrom), currRow, currColumn);
+                    currentPosition = makeCoordinate(charToRoom(roomCameFrom), currRow, currColumn);
                     cameFromButton = true;
                 }
                 else{
@@ -1084,26 +1084,9 @@ class PuzzleRunner{
             }
         }
         void printMapOutput(){
-            
-            // - Print the map similar to the way it was given in the input 
-            // (excluding the map parameters and any comments). 
-            // - Print each color in a separate map one after the other,
-            // starting with ^ and working alphabetically from A to all others
-            // - Each color map should be preceded by a comment indicating the 
-            // color being output and include the following replacements:
-            //     - On the solution path between the starting location and target, 
-            //     empty floors and open doors should be replaced with '+' (done)
-            //     - On the solution path, replace inactive buttons with '%'
-            //     on the map where they were discovered and with '@' on the map that
-            //     matches the button (done)
-            //     - On the //color ^ map, all trapped buttons not on the solution path
-            //     marked with '.'
-            //     - On the //color a map, all matching buttons a and doors A not on the 
-            //     solution path are replaced with '.' (NEED TO DO, ALSO TWEAK THE BUTTONS MAYE???)
-            
             cout << "// color '^'\n";
-            for(int r = 0; r < rows; r++){
-                for(int c = 0; c < cols; c++){
+            for(uint32_t r = 0; r < rows; r++){
+                for(uint32_t c = 0; c < cols; c++){
                     if(backtrace[0][r][c] != ' '){
                             cout << backtrace[0][r][c];
                     } 
@@ -1113,10 +1096,10 @@ class PuzzleRunner{
                 }
                 cout << "\n";
             } //for default color
-            for(char t = 'a'; t < 'a' + numColors; t++){
+            for(char t = 'a'; t < 'a' + (int)numColors; t++){
                 cout << "// color " << t << "\n";
-                for(int r = 0; r < rows; r++){
-                    for(int c = 0; c < cols; c++){
+                for(uint32_t r = 0; r < rows; r++){
+                    for(uint32_t c = 0; c < cols; c++){
                         if(backtrace[charToRoom(t)][r][c] != ' '){
                             cout << backtrace[charToRoom(t)][r][c];
                         } 
@@ -1137,13 +1120,10 @@ class PuzzleRunner{
             //these call on the newly defined numColors, rows, cols
             resizeBacktrace();
             resizeMap();
-            //figure out why we need to count row here
-            int row = 0;
             string line;
             while(getline(cin, line )){
                 if(!isComment(line)){
                    map.push_back(lineConvert(line));    //might be incorrect
-                   row++;
                 }
             }
             checkMapValidity();
@@ -1154,11 +1134,12 @@ class PuzzleRunner{
             //if solution was found, print backtrace w solution
             if(solutionFound){
                 //if --ouput/-o list
-                printListOutput();
-                //if --output/-o map
-                printMapOutput();
-                    //with stack
-                    //with queue
+                if(listmode){
+                    printListOutput();
+                }
+                else{
+                    printMapOutput();
+                }
                 
             }
             //else print no solution + information to follow
@@ -1237,8 +1218,7 @@ class PuzzleRunner{
         // Print help for the user when requested.
         // argv[0] is the name of the currently executing program
         void printHelp(char *argv[]) {
-            cout << "Usage:\n";
-            cout << "./puzzle [-o [map|list] | -q | -s | -h] < \"inputfile\" > \"outputfile\" \n";
+            cout << "Usage: " << argv[0] << " [-o [map|list] | -q | -s | -h] < \"inputfile\" > \"outputfile\" \n";
             //create a more helpful print message
         }  // printHelp()
 }; //end of PuzzleRunner Class
@@ -1253,5 +1233,6 @@ int main(int argc, char *argv[]) {
   // Get the mode from the command line and read in the data
   PuzzleRunner game;
   game.getMode(argc, argv);
+  game.readPuzzle();
 
 }
