@@ -1,10 +1,28 @@
 // Project Identifier: A8A3A33EF075ACEF9B08F5B9845569ECCB423725
 
-#include "main.cpp"
+#include "puzzle.cpp"
 #include <iostream>
 #include <sstream>
 
 using namespace std;
+
+
+
+
+int main(int argc, char *argv[]) {
+  // This should be in all of your projects, speeds up I/O
+  ios_base::sync_with_stdio(false);
+
+
+  // Get the mode from the command line and read in the data
+  PuzzleRunner game;
+  cout << "line 19\n";
+  game.getMode(argc, argv);
+  cout << "line 21\n";
+  game.readPuzzle();
+  cout << "line 23\n";
+
+}
 
 /*
 LEGAL COMMAND LINE ARGS
