@@ -5,6 +5,8 @@
         "string": "cpp",
         "deque": "cpp",
         "iosfwd": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "ios": "cpp",
+        "complex": "cpp"
     }
 }

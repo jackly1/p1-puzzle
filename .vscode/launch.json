@@ -14,7 +14,11 @@
             ],
             "args": ["--queue", 
             "-o",
-            "map"],
+            "map",
+            "<",
+            "spec-simple.txt",
+            ">",
+            "output.txt"],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",
             "postDebugTask": "clean workspace"

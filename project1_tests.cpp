@@ -7,7 +7,7 @@
 using namespace std;
 
 
-
+//caen runner: rsync -rtv --exclude '.git*' ../p1-puzzle/ jackly@login-course.engin.umich.edu:/p1-puzzle-copy/
 
 int main(int argc, char *argv[]) {
   // This should be in all of your projects, speeds up I/O
@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
   cout << "line 21\n";
   game.readPuzzle();
   cout << "line 23\n";
-
 }
 
 /*

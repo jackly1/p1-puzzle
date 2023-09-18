@@ -1,2 +1,0 @@
-line 19
-entered getMode

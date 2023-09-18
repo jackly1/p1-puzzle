@@ -144,7 +144,7 @@ class PuzzleRunner{
             - RESIZE VECTOR(S) (map and backtrace) NOW
          */
         void checkValidInitializing(){
-            if(0 > numColors || numColors > 26
+            if((uint32_t)(0) > numColors || numColors > 26
             || 1 > rows || 1 > cols){
                 cout << "INPUT FOR INITIALIZING TABLE INCORRECT\n";
                 throwError();
@@ -313,7 +313,7 @@ class PuzzleRunner{
         bool isValidCoordinate(const pair<uint32_t,pair<uint32_t,uint32_t>> &toWalkOn){
             uint32_t r = toWalkOn.second.first;
             uint32_t c = toWalkOn.second.second;
-            if(r < 0 || r >= rows || c < 0 || c >= cols){
+            if(r < (uint32_t)(0) || r >= rows || c < (uint32_t)(0) || c >= cols){
                 return false;
             }
             return true;
@@ -638,11 +638,14 @@ class PuzzleRunner{
         }
 
         void getMode(int argc, char * argv[]) {
-            cout << "entered getMode\n";
+            // cout << "argc: " << argc << "\n";
+            // cout << "argv(s): ";
+            // for (int i = 0; i < argc; i++){
+            //     cout << "(" << i << ") " << argv[i] << "\n"; 
+            // }
+            // cout << "entered getMode\n";
             // These are used with getopt_long()
-            cout <<"here" << "\n";
             opterr = false; // Let us handle all error output for command line options
-            cout << "post=opterr\n";
             int choice = 0;
             int index = 0;
             option long_options[] = {
@@ -656,15 +659,25 @@ class PuzzleRunner{
                 {"output", required_argument, nullptr, 'o'},
                 { nullptr, 0, nullptr, '\0' }, //leave alone this has to be last thing in long options
             };  // long_options[]
-            cout << "post-struct\n";
             bool outputMode = false;
-            cout << "post bool\n";
-            while ((choice = getopt_long(argc, argv, "o:hqs", long_options, &index)) != -1) {
-                cout << "entered while\n";
+            while ((choice = getopt_long(argc, argv, "hqso:", long_options, &index)) != -1) {
+                cout << "choice = " << choice << "\n";
                 switch (choice) {
-                    cout << "entered switch case\n";
+                    case 'h':
+                        cout << "entered 104\n";
+                        printHelp(argv);
+                        exit(0);
+                    
+                    case 's':
+                        stack = true;
+                        cout << "entered 115\n";
+                    case 'q':
+                        stack = false;
+                        cout << "entered 113\n";
+
                     case 'o': {  // Need a block here to declare a variable inside a case
                         string arg{optarg};
+                        cout << "entered 111\n";
                         cout << "entered case o (correct) \n";
                         if (arg != "map" && arg != "list") {
                             // The first line of error output has to be a 'fixed' message
@@ -686,16 +699,7 @@ class PuzzleRunner{
                         }
                         break;
                     }  // case 'o'
-                    case 'q':
-                        stack = false;
-                        exit(0);
-                    case 's':
-                        stack = true;
-                        exit(0);
-                    case 'h':
-                        printHelp(argv);
-                        exit(0);
-
+                    
                     default:
                         cout << "error case\n";
                         cerr << "Error: invalid option. See -h or --help for details\n";
