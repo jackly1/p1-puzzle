@@ -6,8 +6,13 @@
 
 using namespace std;
 
+/*
+1576599  2936219  3173010  4783410  
+5729981  6228977  7036764  8616288  
+9393968  0180119*/
 
 //caen runner: rsync -rtv --exclude '.git*' ../p1-puzzle/ jackly@login-course.engin.umich.edu:/p1-puzzle-copy/
+//ssh jackly@login-course.engin.umich.edu
 
 int main(int argc, char *argv[]) {
   // This should be in all of your projects, speeds up I/O
@@ -16,11 +21,8 @@ int main(int argc, char *argv[]) {
 
   // Get the mode from the command line and read in the data
   PuzzleRunner game;
-  cout << "line 19\n";
   game.getMode(argc, argv);
-  cout << "line 21\n";
   game.readPuzzle();
-  cout << "line 23\n";
 }
 
 /*

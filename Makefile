@@ -326,7 +326,14 @@ help:
 # % g++ -std=c++17 -MM *.cpp
 #
 # ADD YOUR OWN DEPENDENCIES HERE
-
+sync :
+	rsync \
+    -rtv \
+    --delete \
+    --exclude '.git*' \
+    --filter=':- .gitignore' \
+    ../p1-puzzle/ \
+    jackly@login-course.engin.umich.edu:p1-puzzle-copy/
 ######################
 # TODO (end) #
 ######################

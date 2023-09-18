@@ -144,7 +144,7 @@ class PuzzleRunner{
             - RESIZE VECTOR(S) (map and backtrace) NOW
          */
         void checkValidInitializing(){
-            if((uint32_t)(0) > numColors || numColors > 26
+            if(0 > (int)numColors || numColors > 26
             || 1 > rows || 1 > cols){
                 cout << "INPUT FOR INITIALIZING TABLE INCORRECT\n";
                 throwError();
@@ -181,7 +181,7 @@ class PuzzleRunner{
         //checks if character is valid
         bool isValidCharacter(char t){ 
             bool found = false;
-            if(t == '^' || t == '?' || t == '#'){
+            if(t == '@' || t == '^' || t == '?' || t == '#' || t == '.'){
                 return true;
             }
             //running from a to a + numColors (i.e. how many colors past default)
@@ -196,19 +196,25 @@ class PuzzleRunner{
         void checkMapValidity(){
             uint32_t atCounter = 0;
             uint32_t questionCounter = 0;
+            cout << "starting check for validity\n";
             
-            for(auto &charVec:map){
-                for(vector<char>::iterator it = charVec.begin(); it != charVec.end(); it++){
-                    if(isAtSymbol(*it)){
+            for(uint32_t r = 0; r < rows; r++){
+                for(uint32_t c = 0; c < cols; c++){
+                    cout << "Checking character: " << map[r][c] << "    ...     ";
+                    if(isAtSymbol(map[r][c])){
+                        cout << "@!\n";
                         atCounter++;
                     }
-                    else if(isQuestionMark(*it)){
+                    else if(isQuestionMark(map[r][c])){
+                        cout << "question!\n";
                         questionCounter++;
                     }
-                    else if(isValidCharacter(*it)){
+                    else if(isValidCharacter(map[r][c])){
+                        cout << "valid!\n";
                         //maybe code to add here?
                     }
                     else{
+                        cout << "invalid!\n";
                         throwError();
                     }
                 }
@@ -313,7 +319,7 @@ class PuzzleRunner{
         bool isValidCoordinate(const pair<uint32_t,pair<uint32_t,uint32_t>> &toWalkOn){
             uint32_t r = toWalkOn.second.first;
             uint32_t c = toWalkOn.second.second;
-            if(r < (uint32_t)(0) || r >= rows || c < (uint32_t)(0) || c >= cols){
+            if((int)r < 0 || r >= rows || (int)c < 0 || c >= cols){
                 return false;
             }
             return true;
@@ -595,28 +601,37 @@ class PuzzleRunner{
         void readPuzzle(){
             string junk;
             cin >> numColors >> rows >> cols;
-            //for testing
-            cout << "READING PUZZLE!\n";
-            cout << "Num Colors: " << numColors << "\n";
-            cout << "Num rows: " << rows << "\n";
-            cout << "Num columns: " << cols << "\n";
-
             checkValidInitializing();
             getline(cin, junk);
             //these call on the newly defined numColors, rows, cols
             resizeBacktrace();
             resizeMap();
+
+            uint32_t currR = 0;
             string line;
-            while(getline(cin, line )){
+
+            while(getline(cin, line)){
                 if(!isComment(line)){
-                   map.push_back(lineConvert(line));    //might be incorrect
+                    map[currR] = (lineConvert(line));
+                    currR++;
                 }
             }
+
+            // cout << "finished reading map\n";
+            // cout << "current map: \n";
+            // for(uint32_t r = 0; r < rows; r++){
+            //     for(uint32_t c = 0; c < cols; c++){
+            //         cout << map[r][c];
+            //     }
+            //     cout << "\n";
+            // }
+
             checkMapValidity();
             findInitialPosition();
             //calls on solve puzzle now that the map has been filled in
             //i.e., start filling search container and current state, filling backtrace
             solvePuzzle();
+            cout << "attempted to solve puzzle \n";
             //if solution was found, print backtrace w solution
             if(solutionFound){
                 //if --ouput/-o list
@@ -626,7 +641,6 @@ class PuzzleRunner{
                 else{
                     printMapOutput();
                 }
-                
             }
             //else print no solution + information to follow
             else{
@@ -661,24 +675,21 @@ class PuzzleRunner{
             };  // long_options[]
             bool outputMode = false;
             while ((choice = getopt_long(argc, argv, "hqso:", long_options, &index)) != -1) {
-                cout << "choice = " << choice << "\n";
                 switch (choice) {
                     case 'h':
-                        cout << "entered 104\n";
                         printHelp(argv);
                         exit(0);
                     
                     case 's':
                         stack = true;
-                        cout << "entered 115\n";
+                        break;
+                       
                     case 'q':
                         stack = false;
-                        cout << "entered 113\n";
+                        break;
 
                     case 'o': {  // Need a block here to declare a variable inside a case
                         string arg{optarg};
-                        cout << "entered 111\n";
-                        cout << "entered case o (correct) \n";
                         if (arg != "map" && arg != "list") {
                             // The first line of error output has to be a 'fixed' message
                             // for the autograder to show it to you.
@@ -705,9 +716,7 @@ class PuzzleRunner{
                         cerr << "Error: invalid option. See -h or --help for details\n";
                         exit(1);
                 }  // switch ..choice
-                cout << "got to 1220 though...\n";
             }  // while
-            cout << "got to 1222\n";
             if (!outputMode) {
                 listmode = false;
             }  // if ..mode
