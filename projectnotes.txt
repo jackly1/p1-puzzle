@@ -256,11 +256,17 @@
      1 .  a  .  .      1 N  %           1 E  @     +        1          S
      2 #  B  .  b      2                2          %        2    S     @
      3 ?  .  B  .      3                3                   3 ?  +  +  +
+        
+        OG:
+        @.A.
+        .a#.
+        #B#b
+        ?.B.
 
         MAP OUTPUT:
         //Color ^  
-      @  .  A  . 
-      .  a  .  .
+      @  +  A  . 
+      .  %  .  .
       #  B  .  b 
       ?  .  B  . 
        //Color a
