@@ -266,8 +266,8 @@
         MAP OUTPUT:
         //Color ^  
       @  +  A  . 
-      .  %  .  .
-      #  B  .  b 
+      .  %  #  .
+      #  B  #  b 
       ?  .  B  . 
        //Color a
       .  +  +  +

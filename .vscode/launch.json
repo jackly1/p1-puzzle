@@ -8,15 +8,15 @@
             "preLaunchTask": "build debug executable",
             "program": "${workspaceFolder}/puzzle_debug",
             "stdio": [
-                "spec-simple.txt", // redirect stdin
+                "small.txt", // redirect stdin
                 "output.txt", // redirect stdout
                 null // redirect stderr
             ],
             "args": ["--queue", 
             "-o",
-            "map",
+            "list",
             "<",
-            "spec-simple.txt",
+            "small.txt",
             ">",
             "output.txt"],
             "stopOnEntry": false,

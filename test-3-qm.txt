@@ -1,0 +1,3 @@
+0 0 0
+// No colors, no size, should throw error
+// 0x0 grid
