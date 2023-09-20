@@ -14,7 +14,7 @@
             ],
             "args": ["--queue", 
             "-o",
-            "list",
+            "map",
             "<",
             "small.txt",
             ">",

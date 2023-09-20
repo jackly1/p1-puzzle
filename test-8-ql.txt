@@ -1,0 +1,7 @@
+3 4 4
+// Although no colors appear, this should work
+// 4x4 grid
+d...@.a.ce
+.C.A.b^^.E
+##Bb#....#
+...c.?.B##

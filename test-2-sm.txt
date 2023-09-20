@@ -1,8 +1,8 @@
-2 4 4
-// should throw error because double ?
+5 4 4
 // 2 colors (A, B)
+//no solution
 // 4x4 grid
-@.A.
-.a#.
-#B#?
+@.^.
+baBB
+AB#.
 ?.B.
