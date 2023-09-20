@@ -294,16 +294,20 @@ class PuzzleRunner{
         buttons, and the target. If there is no solution to the puzzle, 
         the target will always be replaced with '#'.*/
         void rewriteMapNoSolution(){
-            size_t rowCounter = 0;
-            for(auto &charVec:map){
-                size_t columnCounter = 0;
-                for(vector<char>::iterator it = charVec.begin(); it != charVec.end(); it++){
-                    if(!existsInBacktrace(makeCoordinate(charToRoom(*it), rowCounter, columnCounter))){
-                        *it = '#';
+            bool locationDiscovered = false;
+            for(size_t r = 0; r < rows; r++){
+               for(size_t c = 0; c < cols; c++){
+                    for(size_t color = 0; color < numColors; color++){
+                        Coordinate curr = makeCoordinate(color, r, c);
+                        if(existsInBacktrace(curr)){
+                            locationDiscovered = true;
+                        }
                     }
-                    columnCounter++;
+                    if(locationDiscovered == false){
+                        map[r][c] = '#';
+                    }
+                    locationDiscovered = false;
                 }
-                rowCounter++;
             }
         }
 
@@ -434,10 +438,15 @@ class PuzzleRunner{
                 if(!stack){
                     currentState = searchContainer.front();
                     searchContainer.pop_front();
+                    currentColor = roomToChar(currentState.color);
                 }
                 else{
                     currentState = searchContainer.back();
                     searchContainer.pop_back();
+                    currentColor = roomToChar(currentState.color);
+                }
+                if(currentState.color == 1 && currentState.row == 19 && currentState.col == 3){
+                        cout << "here";
                 }
                 // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
                 // <button>, there is a chance to add a color change. 
@@ -528,10 +537,10 @@ class PuzzleRunner{
         void printListOutput(){
             //for default case
             size_t co = 0;
-            size_t r = 0;
-            size_t c  = 0;
             for(auto &color: backtrace){
+                size_t r = 0;
                 for(auto &row: color){
+                    size_t c = 0;
                     for (auto &col: row){
                         if(isListChar(col)){
                             printCoord(co,r,c);
@@ -546,11 +555,14 @@ class PuzzleRunner{
 
         void pathFinder(){
             Coordinate currentPosition = solvedPosition;
-            bool cameFromButton = false;
-            while(!coordinatesEqual(currentPosition, initialPosition)){
+            while(!coordinatesEqual(currentPosition,initialPosition)){
                 size_t currColor = currentPosition.color;
                 size_t currRow = currentPosition.row;
                 size_t currColumn = currentPosition.col;
+                //if map and backtrace != % and backtrace != ? make it + else if nesw
+                if(currColor == 3 && currRow == 19 && currColumn == 6){
+                        cout << "here";
+                }
                 if(coordinatesEqual(currentPosition, solvedPosition)){
                     if(backtrace[currColor][currRow][currColumn] == 'N'){
                         backtrace[currColor][currRow][currColumn] = '?';
@@ -569,14 +581,33 @@ class PuzzleRunner{
                         currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
                     }
                 }
-                else if(isButtonChar(backtrace[currColor][currRow][currColumn])){
-                    char roomCameFrom = backtrace[currColor][currRow][currColumn];
-                    backtrace[currColor][currRow][currColumn] = '@';
-                    currentPosition = makeCoordinate(charToRoom(roomCameFrom), currRow, currColumn);
-                    cameFromButton = true;
+                else if(!isButtonChar(backtrace[currColor][currRow][currColor]) && backtrace[currColor][currRow][currColumn] != '%' && backtrace[currColor][currRow][currColumn] != '?'){
+                    if(backtrace[currColor][currRow][currColumn] == 'N'){
+                        backtrace[currColor][currRow][currColumn] = '+';
+                        currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'E'){                           
+                        backtrace[currColor][currRow][currColumn] = '+';
+                        currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                        backtrace[currColor][currRow][currColumn] = '+';
+                        currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'W'){
+                        backtrace[currColor][currRow][currColumn] = '+';
+                        currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                    }
                 }
                 else{
-                    if(cameFromButton){
+                        //change to @
+                        char roomCameFrom = backtrace[currColor][currRow][currColumn];
+                        backtrace[currColor][currRow][currColumn] = '@';
+                        currentPosition = makeCoordinate(charToRoom(roomCameFrom), currRow, currColumn);
+                        //change to %
+                        currColor = currentPosition.color;
+                        currRow = currentPosition.row;
+                        currColumn = currentPosition.col;
                         if(backtrace[currColor][currRow][currColumn] == 'N'){
                             backtrace[currColor][currRow][currColumn] = '%';
                             currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
@@ -593,26 +624,6 @@ class PuzzleRunner{
                             backtrace[currColor][currRow][currColumn] = '%';
                             currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
                         }
-                        cameFromButton = false;
-                    }
-                    else{
-                        if(backtrace[currColor][currRow][currColumn] == 'N'){
-                            backtrace[currColor][currRow][currColumn] = '+';
-                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
-                            backtrace[currColor][currRow][currColumn] = '+';
-                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
-                            backtrace[currColor][currRow][currColumn] = '+';
-                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'W'){
-                            backtrace[currColor][currRow][currColumn] = '+';
-                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
-                        }
-                    }
                 }
             }
         }
