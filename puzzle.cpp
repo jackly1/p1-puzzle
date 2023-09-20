@@ -547,15 +547,11 @@ class PuzzleRunner{
         void pathFinder(){
             Coordinate currentPosition = solvedPosition;
             bool cameFromButton = false;
-            while(currentPosition.color != initialPosition.color 
-            || currentPosition.row != initialPosition.row
-            || currentPosition.col != initialPosition.col){
+            while(!coordinatesEqual(currentPosition, initialPosition)){
                 size_t currColor = currentPosition.color;
                 size_t currRow = currentPosition.row;
                 size_t currColumn = currentPosition.col;
-                if(currentPosition.color == solvedPosition.color 
-                && currentPosition.row == solvedPosition.row
-                && currentPosition.col == solvedPosition.col){
+                if(coordinatesEqual(currentPosition, solvedPosition)){
                     if(backtrace[currColor][currRow][currColumn] == 'N'){
                         backtrace[currColor][currRow][currColumn] = '?';
                         currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
