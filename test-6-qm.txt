@@ -1,7 +1,0 @@
-2 4 5
-// Although no colors appear, this should work
-// 4x5 grid
-.@.a.
-..+A.
-##Bb#
-?....

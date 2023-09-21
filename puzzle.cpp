@@ -43,6 +43,8 @@ class PuzzleRunner{
         Coordinate solvedPosition;
         //deque of everything contained in searchContainer
         deque<Coordinate> searchContainer;
+        //deque to contain pathway start to end
+        deque<Coordinate> pathway;
         //bool stack: false if queue mode, true if stack mode
         bool stack = false;
 
@@ -297,12 +299,13 @@ class PuzzleRunner{
             bool locationDiscovered = false;
             for(size_t r = 0; r < rows; r++){
                for(size_t c = 0; c < cols; c++){
-                    for(size_t color = 0; color < numColors; color++){
+                    for(size_t color = 0; color < numColors + 1; color++){
                         Coordinate curr = makeCoordinate(color, r, c);
                         if(existsInBacktrace(curr)){
                             locationDiscovered = true;
                         }
                     }
+
                     if(locationDiscovered == false){
                         map[r][c] = '#';
                     }
@@ -438,23 +441,21 @@ class PuzzleRunner{
                 if(!stack){
                     currentState = searchContainer.front();
                     searchContainer.pop_front();
-                    currentColor = roomToChar(currentState.color);
                 }
                 else{
                     currentState = searchContainer.back();
                     searchContainer.pop_back();
-                    currentColor = roomToChar(currentState.color);
                 }
-                if(currentState.color == 1 && currentState.row == 19 && currentState.col == 3){
-                        cout << "here";
-                }
+                currentColor = roomToChar(currentState.color);
+                // if(currentState.color == 2 && currentState.row == 3 && currentState.col == 1){
+                //     cout << "yo";
+                // }
                 // 5. If current_state { <color>, <row>, <col> } is standing on an active button,
                 // <button>, there is a chance to add a color change. 
                 if(isButton(roomToChar(currentState.color),map[currentState.row][currentState.col])){
                     //cout << "\n(" << roomToChar(curr.color) << ", " << curr.row << ", " << curr.col << ") is a button\n";
                     Coordinate colorChangedCurr = 
-                        makeCoordinate(charToRoom(map[currentState.row][currentState.col])
-                            , currentState.row, currentState.col);
+                        makeCoordinate(charToRoom(map[currentState.row][currentState.col]), currentState.row, currentState.col);
                     if(!existsInBacktrace(colorChangedCurr)){
                         //If { <button>, <row>, <col> } is not yet discovered, 
                         //add the color change to the search_container and mark it as discovered. 
@@ -466,167 +467,132 @@ class PuzzleRunner{
                     //Investigation from an active button will result in zero or one states being discovered.
                 }//case where undiscovered button
                 else{
-                    size_t currColor = currentState.color;
-                    size_t currentRow = currentState.row;
-                    size_t currentCol = currentState.col;
-                    char currentChar = roomToChar(currColor);
-                    Coordinate north = makeCoordinate(currColor, currentRow - 1, currentCol);
-                    Coordinate east = makeCoordinate(currColor, currentRow, currentCol + 1);
-                    Coordinate south = makeCoordinate(currColor, currentRow + 1, currentCol);
-                    Coordinate west = makeCoordinate(currColor, currentRow, currentCol - 1);
-                    //provided they are not off the edge of the map, not previously discovered,
-                    // and not a wall or closed door:
-                    // 7. north/up { <color>, <row - 1>, <col> }
-                    if(!existsInBacktrace(north) && isValidCoordinate(north) && isWalkable(currentChar, map[north.row][north.col])){
-                        //cout << "looked north from ";
-                        // printCoord(currentColor,currentRow,currentCol);
-                        searchContainer.push_back(north);
-                        backtrace[north.color][north.row][north.col] = 'S';
-                        if(isQuestionMark(map[currentState.row][currentState.col])){
-                            solutionFound = true;
-                            solvedPosition = currentState;
-                            break;
-                        }    
+                    if(stack){
+                        lookDirectionStack(currentState);
                     }
-                    // 8. east/right { <color>, <row>, <col + 1> }
-                    if(!existsInBacktrace(east) && isValidCoordinate(east) && isWalkable(currentChar, map[east.row][east.col])){
-                        //cout << "looked east from ";
-                        // printCoord(currentColor,currentRow,currentCol);
-                        searchContainer.push_back(east);
-                        backtrace[east.color][east.row][east.col] = 'W';
-                        if(isQuestionMark(map[currentState.row][currentState.col])){
-                            solutionFound = true;
-                            solvedPosition = currentState;
-                            break;
-                        }  
-                    }
-                    // 9. south/down { <color>, <row + 1>, <col> }
-                    if(!existsInBacktrace(south) && isValidCoordinate(south)&& isWalkable(currentChar, map[south.row][south.col])){
-                        //cout << "looked south from ";
-                        //  printCoord(currentColor,currentRow,currentCol);
-                        searchContainer.push_back(south);
-                        backtrace[south.color][south.row][south.col] = 'N';
-                        if(isQuestionMark(map[currentState.row][currentState.col])){
-                            solutionFound = true;
-                            solvedPosition = currentState;
-                            break;
-                        }  
-                    }
-                    //10. west/left { <color>, <row>, <col - 1> }
-                    if(!existsInBacktrace(west) && isValidCoordinate(west) && isWalkable(currentChar, map[west.row][west.col])){
-                     //cout << "looked west from ";
-                        // printCoord(currentColor,currentRow,currentCol);
-                        searchContainer.push_back(west);
-                        backtrace[west.color][west.row][west.col] = 'E';
-                        if(isQuestionMark(map[currentState.row][currentState.col])){
-                            solutionFound = true;
-                            solvedPosition = currentState;
-                            break;
-                        }  
+                    else{
+                        lookDirectionQueue(currentState);
                     }
                 }
             }
         }
 
-        bool isListChar(const char &comp){
-            if(comp == '+' || comp == '@' || comp == '%' || comp == '?'){
-                return true;
-            }
-            return false;
-        }
-        void printListOutput(){
-            //for default case
-            size_t co = 0;
-            for(auto &color: backtrace){
-                size_t r = 0;
-                for(auto &row: color){
-                    size_t c = 0;
-                    for (auto &col: row){
-                        if(isListChar(col)){
-                            printCoord(co,r,c);
-                        }
-                        c++;
-                    }
-                    r++;
+        //looks north, east, south, west, for a stack
+        void lookDirectionStack(const Coordinate &curr){
+            size_t currentColor = curr.color;
+            char currentChar = roomToChar(curr.color);
+            size_t currentRow = curr.row;
+            size_t currentCol = curr.col;
+            Coordinate north = makeCoordinate(currentColor, currentRow - 1, currentCol);
+            Coordinate east = makeCoordinate(currentColor, currentRow, currentCol + 1);
+            Coordinate south = makeCoordinate(currentColor, currentRow + 1, currentCol);
+            Coordinate west = makeCoordinate(currentColor, currentRow, currentCol - 1);
+            //provided they are not off the edge of the map, not previously discovered,
+            // and not a wall or closed door:
+                // 7. north/up { <color>, <row - 1>, <col> }
+                if(!existsInBacktrace(north) && isValidCoordinate(north) && isWalkable(currentChar, map[north.row][north.col])){
+                    //cout << "looked north from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(north);
+                    backtrace[north.color][north.row][north.col] = 'S';
+                    if(isQuestionMark(map[north.row][north.col])){
+                        solutionFound = true;
+                        solvedPosition = north;
+                    }  
                 }
-                co++;
-            }
-        }                
+                // 8. east/right { <color>, <row>, <col + 1> }
+                if(!existsInBacktrace(east) && isValidCoordinate(east) && isWalkable(currentChar, map[east.row][east.col])){
+                    //cout << "looked east from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(east);
+                    backtrace[east.color][east.row][east.col] = 'W';
+                    if(isQuestionMark(map[east.row][east.col])){
+                        solutionFound = true;
+                        solvedPosition = east;
+                    }  
+                }
+                // 9. south/down { <color>, <row + 1>, <col> }
+                if(!existsInBacktrace(south) && isValidCoordinate(south)&& isWalkable(currentChar, map[south.row][south.col])){
+                    //cout << "looked south from ";
+                  //  printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(south);
+                    backtrace[south.color][south.row][south.col] = 'N';
+                    if(isQuestionMark(map[south.row][south.col])){
+                        solutionFound = true;
+                        solvedPosition = south;
+                    }  
+                }
+                //10. west/left { <color>, <row>, <col - 1> }
+                if(!existsInBacktrace(west) && isValidCoordinate(west) && isWalkable(currentChar, map[west.row][west.col])){
+                    //cout << "looked west from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(west);
+                    backtrace[west.color][west.row][west.col] = 'E';
+                    if(isQuestionMark(map[west.row][west.col])){
+                        solutionFound = true;
+                        solvedPosition = west;
+                    }  
+                }
+        }
 
-        void pathFinder(){
-            Coordinate currentPosition = solvedPosition;
-            while(!coordinatesEqual(currentPosition,initialPosition)){
-                size_t currColor = currentPosition.color;
-                size_t currRow = currentPosition.row;
-                size_t currColumn = currentPosition.col;
-                //if map and backtrace != % and backtrace != ? make it + else if nesw
-                if(currColor == 3 && currRow == 19 && currColumn == 6){
-                        cout << "here";
+        void lookDirectionQueue(const Coordinate &curr){
+            size_t currentColor = curr.color;
+            char currentChar = roomToChar(curr.color);
+            size_t currentRow = curr.row;
+            size_t currentCol = curr.col;
+            Coordinate north = makeCoordinate(currentColor, currentRow - 1, currentCol);
+            Coordinate east = makeCoordinate(currentColor, currentRow, currentCol + 1);
+            Coordinate south = makeCoordinate(currentColor, currentRow + 1, currentCol);
+            Coordinate west = makeCoordinate(currentColor, currentRow, currentCol - 1);
+            //provided they are not off the edge of the map, not previously discovered,
+            // and not a wall or closed door:
+                // 7. north/up { <color>, <row - 1>, <col> }
+                if(!existsInBacktrace(north) && isValidCoordinate(north) && isWalkable(currentChar, map[north.row][north.col])){
+                    //cout << "looked north from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(north);
+                    backtrace[north.color][north.row][north.col] = 'S';
+                    if(isQuestionMark(map[north.row][north.col])){
+                        solutionFound = true;
+                        solvedPosition = north;
+                    }  
                 }
-                if(coordinatesEqual(currentPosition, solvedPosition)){
-                    if(backtrace[currColor][currRow][currColumn] == 'N'){
-                        backtrace[currColor][currRow][currColumn] = '?';
-                        currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'E'){
-                        backtrace[currColor][currRow][currColumn] = '?';
-                        currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'S'){
-                        backtrace[currColor][currRow][currColumn] = '?';
-                        currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'W'){
-                        backtrace[currColor][currRow][currColumn] = '?';
-                        currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
-                    }
+                // 8. east/right { <color>, <row>, <col + 1> }
+                if(!existsInBacktrace(east) && isValidCoordinate(east) && isWalkable(currentChar, map[east.row][east.col])){
+                    //cout << "looked east from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(east);
+                    backtrace[east.color][east.row][east.col] = 'W';
+                    if(isQuestionMark(map[east.row][east.col])){
+                        solutionFound = true;
+                        solvedPosition = east;
+                    }  
                 }
-                else if(!isButtonChar(backtrace[currColor][currRow][currColor]) && backtrace[currColor][currRow][currColumn] != '%' && backtrace[currColor][currRow][currColumn] != '?'){
-                    if(backtrace[currColor][currRow][currColumn] == 'N'){
-                        backtrace[currColor][currRow][currColumn] = '+';
-                        currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'E'){                           
-                        backtrace[currColor][currRow][currColumn] = '+';
-                        currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'S'){
-                        backtrace[currColor][currRow][currColumn] = '+';
-                        currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
-                    }
-                    else if(backtrace[currColor][currRow][currColumn] == 'W'){
-                        backtrace[currColor][currRow][currColumn] = '+';
-                        currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
-                    }
+                // 9. south/down { <color>, <row + 1>, <col> }
+                if(!existsInBacktrace(south) && isValidCoordinate(south)&& isWalkable(currentChar, map[south.row][south.col])){
+                    //cout << "looked south from ";
+                  //  printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(south);
+                    backtrace[south.color][south.row][south.col] = 'N';
+                    if(isQuestionMark(map[south.row][south.col])){
+                        solutionFound = true;
+                        solvedPosition = south;
+                    }  
                 }
-                else{
-                        //change to @
-                        char roomCameFrom = backtrace[currColor][currRow][currColumn];
-                        backtrace[currColor][currRow][currColumn] = '@';
-                        currentPosition = makeCoordinate(charToRoom(roomCameFrom), currRow, currColumn);
-                        //change to %
-                        currColor = currentPosition.color;
-                        currRow = currentPosition.row;
-                        currColumn = currentPosition.col;
-                        if(backtrace[currColor][currRow][currColumn] == 'N'){
-                            backtrace[currColor][currRow][currColumn] = '%';
-                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
-                            backtrace[currColor][currRow][currColumn] = '%';
-                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
-                            backtrace[currColor][currRow][currColumn] = '%';
-                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
-                        }
-                        else if(backtrace[currColor][currRow][currColumn] == 'W'){
-                            backtrace[currColor][currRow][currColumn] = '%';
-                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
-                        }
+                //10. west/left { <color>, <row>, <col - 1> }
+                if(!existsInBacktrace(west) && isValidCoordinate(west) && isWalkable(currentChar, map[west.row][west.col])){
+                    //cout << "looked west from ";
+                   // printCoord(currentColor,currentRow,currentCol);
+                    searchContainer.push_back(west);
+                    backtrace[west.color][west.row][west.col] = 'E';
+                    if(isQuestionMark(map[west.row][west.col])){
+                        solutionFound = true;
+                        solvedPosition = west;
+                    }  
                 }
-            }
         }
+
+
 
         bool isValidPrintingChar(const char &t){
             if(t != '@' && t != '+' && t != '%' && t != '?'){
@@ -646,25 +612,27 @@ class PuzzleRunner{
             return false;
         }
 
+        bool isUpper(char button, char upper){
+            if(tolower(upper) == button){
+                return true;
+            }
+            return false;
+        }
+
         void printMapOutput(){
             cout << "// color ^\n";
             for(size_t r = 0; r < rows; r++){
                 for(size_t c = 0; c < cols; c++){
-                    char currentChar = backtrace[0][r][c];
-                    if(map[r][c] == '^' && !isValidPrintingChar(currentChar)){
-                        cout << '.';
+                    char currentBChar = backtrace[0][r][c];
+                    char currentMChar = map[r][c];
+                    if(currentBChar != '_' && isValidPrintingChar(currentBChar)){
+                        cout << currentBChar;
                     }
-                    else if(currentChar == '\xff'){
-                        cout << map[r][c];
-                    }
-                    else if((!isValidPrintingChar(currentChar) && isWalkable('^', map[r][c]))){
+                    else if(currentMChar == '^'){
                         cout << '.';
-                    } 
-                    else if(!isValidPrintingChar(currentChar) && !isWalkable('^', map[r][c])){
-                        cout << map[r][c];
                     }
                     else{
-                        cout << currentChar;
+                        cout << map[r][c];
                     }
                 }
                 cout << "\n";
@@ -673,30 +641,117 @@ class PuzzleRunner{
                 cout << "// color " << t << "\n";
                 for(size_t r = 0; r < rows; r++){
                     for(size_t c = 0; c < cols; c++){
-                        char currentChar = backtrace[charToRoom(t)][r][c];
-                        if(currentChar == t){
+                        char currentBChar = backtrace[charToRoom(t)][r][c];
+                        char currentMChar = map[r][c];
+                        if(currentMChar == '@' && !isValidPrintingChar(currentBChar)){
                             cout << '.';
                         }
-                        else if(currentChar == '\xff'){
-                            cout << map[r][c];
+                        else if(currentBChar != '_' && isValidPrintingChar(currentBChar)){
+                            cout << currentBChar;
                         }
-                        else if(!isValidPrintingChar(currentChar) && isButtonChar(map[r][c])){
-                            cout << map[r][c];
-                        }
-                        else if(!isValidPrintingChar(currentChar) && isWalkable(t, map[r][c])){
+                        else if(currentMChar == t || isUpper(t, currentMChar)){
                             cout << '.';
-                        } 
-                        else if(!isValidPrintingChar(currentChar) && !isWalkable(t, map[r][c])){
-                            cout << map[r][c];
                         }
                         else{
-                            cout << currentChar;
+                            cout << map[r][c];
                         }
                     }
                 cout << "\n";
                 }
             } // for all colors
         }
+
+        bool isListChar(const char &comp){
+            if(comp == '+' || comp == '@' || comp == '%' || comp == '?'){
+                return true;
+            }
+            return false;
+        }
+
+        void printListOutput(){
+            for(auto &i:pathway){
+                printCoord(i.color, i.row, i.col);
+            }
+        }        
+
+        void pathFinder(){
+            Coordinate currentPosition = solvedPosition;
+            bool cameFromButton = false;
+            while(currentPosition.color != initialPosition.color 
+            || currentPosition.row != initialPosition.row
+            || currentPosition.col != initialPosition.col){
+                size_t currColor = currentPosition.color;
+                size_t currRow = currentPosition.row;
+                size_t currColumn = currentPosition.col;
+                pathway.push_front(currentPosition);
+                if(currentPosition.color == solvedPosition.color 
+                && currentPosition.row == solvedPosition.row
+                && currentPosition.col == solvedPosition.col){
+                    if(backtrace[currColor][currRow][currColumn] == 'N'){
+                        backtrace[currColor][currRow][currColumn] = '?';
+                        currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'E'){
+                        backtrace[currColor][currRow][currColumn] = '?';
+                        currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                        backtrace[currColor][currRow][currColumn] = '?';
+                        currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                    }
+                    else if(backtrace[currColor][currRow][currColumn] == 'W'){
+                        backtrace[currColor][currRow][currColumn] = '?';
+                        currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                    }
+                }
+                else if(isButtonChar(backtrace[currColor][currRow][currColumn])){
+                    char roomCameFrom = backtrace[currColor][currRow][currColumn];
+                    backtrace[currColor][currRow][currColumn] = '@';
+                    currentPosition = makeCoordinate(charToRoom(roomCameFrom), currRow, currColumn);
+                    cameFromButton = true;
+                }
+                else{
+                    if(cameFromButton){
+                        if(backtrace[currColor][currRow][currColumn] == 'N'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'W'){
+                            backtrace[currColor][currRow][currColumn] = '%';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                        }
+                        cameFromButton = false;
+                    }
+                    else{
+                        if(backtrace[currColor][currRow][currColumn] == 'N'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow - 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'E'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn + 1);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'S'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow + 1, currColumn);
+                        }
+                        else if(backtrace[currColor][currRow][currColumn] == 'W'){
+                            backtrace[currColor][currRow][currColumn] = '+';
+                            currentPosition = makeCoordinate(currColor, currRow, currColumn - 1);
+                        }
+                    }
+                }
+            }
+            pathway.push_front(initialPosition);
+        }    
 
         void readPuzzle(){
             string junk;

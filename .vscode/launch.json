@@ -8,7 +8,7 @@
             "preLaunchTask": "build debug executable",
             "program": "${workspaceFolder}/puzzle_debug",
             "stdio": [
-                "spec-full.txt", // redirect stdin
+                "spec-simple-no.txt", // redirect stdin
                 "output.txt", // redirect stdout
                 null // redirect stderr
             ],
@@ -16,7 +16,7 @@
             "-o",
             "map",
             "<",
-            "spec-full.txt",
+            "spec-simple-no.txt",
             ">",
             "output.txt"],
             "stopOnEntry": false,
